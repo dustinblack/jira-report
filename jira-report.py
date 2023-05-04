@@ -158,12 +158,14 @@ try:
             json_result=True,
             maxResults=100,
             expand="changelog",
-            fields=["comment", "assignee", "creator", "status", "updated", "summary"],
+            fields=["comment", "assignee", "creator", "status", "updated", "summary", "status"],
         )
     )
 except:
     logger.error("Jira query error!")
     sys.exit()
+    
+print(issues)
 
 report_list = []
 
@@ -188,6 +190,7 @@ if issues[0]["total"] > 0:
                     "issue": result["key"],
                     "link": f"{args.jira_server}/browse/{result['key']}",
                     "owner": owner,
+                    "status": result['fields']['status'],
                     "summary": result["fields"]["summary"],
                     "creator": result["fields"]["creator"]["displayName"],
                     "status": result["fields"]["status"]["name"],
@@ -203,8 +206,10 @@ report = []
 
 for item in report_list:
     report.append(
+        "==========\n"
         f"Issue #: {item['issue']} ({item['link']})\n"
         f"Owner: {item['owner']}\n"
+        f"Status: {item['status']}\n"
         f"Summary: {item['summary']}\n"
         f"Updated: {item['updated']}\n"
         f"Latest update:\n{item['comment']}\n"

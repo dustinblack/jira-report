@@ -1,8 +1,4 @@
 argparse
 jira
 logger
-sys
-time
 datetime
-smtplib
-email.mime.text
