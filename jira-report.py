@@ -175,7 +175,8 @@ except:
 report_list = []
 
 if issues[0]["total"] > 0:
-    logger.info(f"Issue count: {issues[0]['total']}")
+    issue_count = issues[0]["total"]
+    logger.info(f"Issue count: {issue_count}")
     for issue in issues:
         for result in issue["issues"]:
             if result["fields"]["assignee"] is None:
@@ -206,7 +207,7 @@ if issues[0]["total"] > 0:
 else:
     logger.warning("Query returned no results!")
 
-report = []
+report = [f"Issue count: {issue_count}\n\n"]
 
 for item in report_list:
     report.append("==========\n")
@@ -221,7 +222,7 @@ for item in report_list:
 
 report_message = " ".join(report)
 
-html_report = []
+html_report = [f"Issue count: {issue_count}<br><br>\n"]
 
 for item in report_list:
     html_report.append("<hr>\n")
