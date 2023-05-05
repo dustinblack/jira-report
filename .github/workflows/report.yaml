@@ -6,15 +6,15 @@ on:
   push:
 
 jobs:
-  telco_report:
-    name: Run telco jira report
+  report:
+    name: Run jira reports
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
-      - name: Run report
+      - name: Run telco report
         env:
           JIRA_SERVER: ${{ secrets.REDHAT_PERFBOT_JIRA_SERVER }}
           JIRA_TOKEN: ${{ secrets.REDHAT_PERFBOT_JIRA_TOKEN }}
@@ -30,4 +30,21 @@ jobs:
           --email-from perfscale-automation@redhat.com \
           --email-user $EMAIL_USER --email-server "smtp.gmail.com" \
           --email-subject "$(eval echo $TELCO_SUBJECT)" --email-message "$(eval echo $TELCO_MESSAGE)" \
+          --email-password $EMAIL_TOKEN
+      - name: Run panda report
+        env:
+          JIRA_SERVER: ${{ secrets.REDHAT_PERFBOT_JIRA_SERVER }}
+          JIRA_TOKEN: ${{ secrets.REDHAT_PERFBOT_JIRA_TOKEN }}
+          PANDA_JQL: ${{ secrets.REDHAT_PERFBOT_PANDA_JQL }}
+          EMAIL_USER: ${{ secrets.REDHAT_PERFBOT_EMAIL_USER }}
+          EMAIL_TOKEN: ${{ secrets.REDHAT_PERFBOT_EMAIL_TOKEN }}
+          PANDA_RECIPIENTS: ${{ secrets.REDHAT_PERFBOT_PANDA_RECIPIENTS }}
+          PANDA_SUBJECT: ${{ secrets.REDHAT_PERFBOT_PANDA_SUBJECT }}
+          PANDA_MESSAGE: ${{ secrets.REDHAT_PERFBOT_PANDA_MESSAGE }}
+        run: |
+          ./jira-report.py --server $JIRA_SERVER --token $JIRA_TOKEN \
+          --jql "$PANDA_JQL" --recipients "$PANDA_RECIPIENTS" \
+          --email-from perfscale-automation@redhat.com \
+          --email-user $EMAIL_USER --email-server "smtp.gmail.com" \
+          --email-subject "$(eval echo $PANDA_SUBJECT)" --email-message "$(eval echo $PANDA_MESSAGE)" \
           --email-password $EMAIL_TOKEN
