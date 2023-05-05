@@ -184,17 +184,17 @@ if issues[0]["total"] > 0:
             )
             report_list.append(
                 {
-                    "issue": result["key"],
-                    "link": f"{args.jira_server}/browse/{result['key']}",
-                    "owner": owner,
-                    "epic": result['fields']['customfield_12311140'],
-                    "epic_link": f"{args.jira_server}/browse/{result['fields']['customfield_12311140']}",
-                    "status": result['fields']['status'],
-                    "summary": result["fields"]["summary"],
-                    "creator": result["fields"]["creator"]["displayName"],
-                    "status": result["fields"]["status"]["name"],
-                    "updated": datetime.strftime(updated_time, "%a %d %b %Y, %I:%M%p"),
-                    "comment": latest_comment,
+                    "Issue": result["key"],
+                    "Link": f"{args.jira_server}/browse/{result['key']}",
+                    "Owner": owner,
+                    "Epic": result['fields']['customfield_12311140'],
+                    "Epic Link": f"{args.jira_server}/browse/{result['fields']['customfield_12311140']}",
+                    "Status": result['fields']['status'],
+                    "Summary": result["fields"]["summary"],
+                    # "Creator": result["fields"]["creator"]["displayName"],
+                    "Status": result["fields"]["status"]["name"],
+                    "Updated": datetime.strftime(updated_time, "%a %d %b %Y, %I:%M%p"),
+                    "Latest Update": latest_comment,
                 }
             )
 else:
@@ -203,21 +203,15 @@ else:
 report = []
 
 for item in report_list:
+    report.append("==========\n")
+    for key, value in item.items():
+        if "Link" not in key:
+            report.append(f"{key}: {value}\n")
+        elif "Epic" in key and item['Epic']:
+            report.append(f"({value})\n")
+        elif "Epic" not in key:
+            report.append(f"({value})\n")
     report.append(
-        "==========\n"
-        f"Issue #: {item['issue']} ({item['link']})\n"
-        f"Owner: {item['owner']}\n"
-        f"Epic: {item['epic']}"
-    )
-    if item['epic']:
-        report.append(f"({item['epic_link']})\n")
-    else:
-        report.append("\n")
-    report.append(
-        f"Status: {item['status']}\n"
-        f"Summary: {item['summary']}\n"
-        f"Updated: {item['updated']}\n"
-        f"Latest update:\n{item['comment']}\n"
         "\n\n"
     )
 
