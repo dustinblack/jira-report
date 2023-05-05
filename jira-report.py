@@ -133,7 +133,7 @@ if (args.email_user is None):
 
 
 def send_email(subject, body, sender, user, recipients, password):
-    msg = MIMEText(body)
+    msg = MIMEText(body, "html")
     msg["Subject"] = subject
     msg["From"] = sender
     msg["To"] = recipients
@@ -217,8 +217,28 @@ for item in report_list:
 
 report_message = " ".join(report)
 
+html_report = []
+
+for item in report_list:
+    html_report.append("<hr>\n")
+    for key, value in item.items():
+        if "Link" not in key:
+            if "Latest" not in key:
+                html_report.append(f"<b>{key}</b>: {value}<br>\n")
+            else:
+                html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
+        elif "Epic" in key and item['Epic']:
+            html_report.append(f"({value})<br>\n")
+        elif "Epic" not in key:
+            html_report.append(f"({value})<br>\n")
+    html_report.append(
+        "\n\n"
+    )
+
+html_message = " ".join(html_report)
+
 if args.recipients and not args.local:
-    email_body = f"{args.email_message}\n\n{report_message}"
+    email_body = f"{args.email_message}\n\n{html_message}"
     logger.info(f"Emailing recipients: {args.recipients}")
     logger.info(f"Emailing from: {args.email_from}")
     logger.info(f"Email subject: {args.email_subject}")
