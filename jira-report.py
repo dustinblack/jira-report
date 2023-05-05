@@ -157,23 +157,20 @@ try:
             jql_str=args.jql,
             json_result=True,
             maxResults=100,
-            expand="changelog",
-            fields=["comment", "assignee", "creator", "status", "updated", "summary", "status"],
+            # expand="changelog",
+            fields=["comment", "assignee", "creator", "status", "updated", "summary", "status", "customfield_12311140"],
         )
     )
 except:
     logger.error("Jira query error!")
     sys.exit()
     
-print(issues)
-
 report_list = []
 
 if issues[0]["total"] > 0:
     logger.info(f"Issue count: {issues[0]['total']}")
     for issue in issues:
         for result in issue["issues"]:
-            # logger.info(result)
             if result["fields"]["assignee"] is None:
                 owner = "NO OWNER"
             else:
@@ -190,12 +187,13 @@ if issues[0]["total"] > 0:
                     "issue": result["key"],
                     "link": f"{args.jira_server}/browse/{result['key']}",
                     "owner": owner,
+                    "epic": result['fields']['customfield_12311140'],
+                    "epic_link": f"{args.jira_server}/browse/{result['fields']['customfield_12311140']}",
                     "status": result['fields']['status'],
                     "summary": result["fields"]["summary"],
                     "creator": result["fields"]["creator"]["displayName"],
                     "status": result["fields"]["status"]["name"],
                     "updated": datetime.strftime(updated_time, "%a %d %b %Y, %I:%M%p"),
-                    # "ID" : result['id'],
                     "comment": latest_comment,
                 }
             )
@@ -209,6 +207,7 @@ for item in report_list:
         "==========\n"
         f"Issue #: {item['issue']} ({item['link']})\n"
         f"Owner: {item['owner']}\n"
+        f"Epic: {item['epic']} ({item['epic_link']})\n"
         f"Status: {item['status']}\n"
         f"Summary: {item['summary']}\n"
         f"Updated: {item['updated']}\n"
