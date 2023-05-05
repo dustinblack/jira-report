@@ -207,7 +207,13 @@ for item in report_list:
         "==========\n"
         f"Issue #: {item['issue']} ({item['link']})\n"
         f"Owner: {item['owner']}\n"
-        f"Epic: {item['epic']} ({item['epic_link']})\n"
+        f"Epic: {item['epic']}"
+    )
+    if item['epic']:
+        report.append(f"({item['epic_link']})\n")
+    else:
+        report.append("\n")
+    report.append(
         f"Status: {item['status']}\n"
         f"Summary: {item['summary']}\n"
         f"Updated: {item['updated']}\n"
