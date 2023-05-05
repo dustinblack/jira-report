@@ -238,7 +238,7 @@ for item in report_list:
 html_message = " ".join(html_report)
 
 if args.recipients and not args.local:
-    email_body = f"{args.email_message}\n\n{html_message}"
+    email_body = f"{args.email_message}<br><br>{html_message}"
     logger.info(f"Emailing recipients: {args.recipients}")
     logger.info(f"Emailing from: {args.email_from}")
     logger.info(f"Email subject: {args.email_subject}")
