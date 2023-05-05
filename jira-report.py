@@ -168,7 +168,7 @@ def send_email(subject, body, sender, user, recipients, password):
     msg = MIMEText(body, "html")
     msg["Subject"] = subject
     msg["From"] = sender
-    msg["To"] = recipients
+    msg["To"] =  ", ".join(recipients)
     smtp_server = SMTP_SSL(args.email_server, args.smtp_port)
     smtp_server.login(user, password)
     smtp_server.sendmail(sender, recipients, msg.as_string())
@@ -276,6 +276,8 @@ html_message = " ".join(html_report)
 
 if args.recipients and not args.local:
     email_body = f"{args.email_message}<br><br>{html_message}"
+    recipients_list = args.recipients.split(",")
+
     logger.info(f"Emailing recipients: {args.recipients}")
     logger.info(f"Emailing from: {args.email_from}")
     logger.info(f"Email subject: {args.email_subject}")
@@ -286,7 +288,7 @@ if args.recipients and not args.local:
         email_body,
         args.email_from,
         args.email_user,
-        args.recipients,
+        recipients_list,
         args.email_password,
     )
 
