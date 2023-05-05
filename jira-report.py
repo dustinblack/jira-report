@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 from jira import JIRA
 from logger import logger
 import sys
-from time import mktime
 from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
@@ -29,12 +28,7 @@ parser.add_argument(
     help="Jira authentication token",
 )
 parser.add_argument(
-    "--jql", 
-    "-J", 
-    type=str, 
-    dest="jql", 
-    required=True, 
-    help="JQL query for Jira search"
+    "--jql", "-J", type=str, dest="jql", required=True, help="JQL query for Jira search"
 )
 parser.add_argument(
     "--recipients",
@@ -109,7 +103,10 @@ parser.add_argument(
     dest="local",
     required=False,
     default=False,
-    help="Do not send emails; only output the report locally (defaults to True if --recipients is empty)",
+    help=(
+        "Do not send emails; only output the report locally (defaults to True if"
+        " --recipients is empty)"
+    ),
 )
 
 args = parser.parse_args()
@@ -125,10 +122,11 @@ if (
     and not args.local
 ):
     parser.error(
-        "--recipients requires --email-server, --email-from, --email-subject, and --email-password"
+        "--recipients requires --email-server, --email-from, --email-subject, and"
+        " --email-password"
     )
 
-if (args.email_user is None):
+if args.email_user is None:
     args.email_user = args.email_from
 
 
@@ -158,13 +156,22 @@ try:
             json_result=True,
             maxResults=100,
             # expand="changelog",
-            fields=["comment", "assignee", "creator", "status", "updated", "summary", "status", "customfield_12311140"],
+            fields=[
+                "comment",
+                "assignee",
+                "creator",
+                "status",
+                "updated",
+                "summary",
+                "status",
+                "customfield_12311140",
+            ],
         )
     )
 except:
     logger.error("Jira query error!")
     sys.exit()
-    
+
 report_list = []
 
 if issues[0]["total"] > 0:
@@ -187,11 +194,10 @@ if issues[0]["total"] > 0:
                     "Issue": result["key"],
                     "Link": f"{args.jira_server}/browse/{result['key']}",
                     "Owner": owner,
-                    "Epic": result['fields']['customfield_12311140'],
-                    "Epic Link": f"{args.jira_server}/browse/{result['fields']['customfield_12311140']}",
-                    "Status": result['fields']['status'],
+                    "Epic": result["fields"]["customfield_12311140"],
+                    "Epic Link": f"{args.jira_server}/browse/"
+                    f"{result['fields']['customfield_12311140']}",
                     "Summary": result["fields"]["summary"],
-                    # "Creator": result["fields"]["creator"]["displayName"],
                     "Status": result["fields"]["status"]["name"],
                     "Updated": datetime.strftime(updated_time, "%a %d %b %Y, %I:%M%p"),
                     "Latest Update": latest_comment,
@@ -207,13 +213,11 @@ for item in report_list:
     for key, value in item.items():
         if "Link" not in key:
             report.append(f"{key}: {value}\n")
-        elif "Epic" in key and item['Epic']:
+        elif "Epic" in key and item["Epic"]:
             report.append(f"({value})\n")
         elif "Epic" not in key:
             report.append(f"({value})\n")
-    report.append(
-        "\n\n"
-    )
+    report.append("\n\n")
 
 report_message = " ".join(report)
 
@@ -227,13 +231,11 @@ for item in report_list:
                 html_report.append(f"<b>{key}</b>: {value}<br>\n")
             else:
                 html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
-        elif "Epic" in key and item['Epic']:
+        elif "Epic" in key and item["Epic"]:
             html_report.append(f"({value})<br>\n")
         elif "Epic" not in key:
             html_report.append(f"({value})<br>\n")
-    html_report.append(
-        "\n\n"
-    )
+    html_report.append("\n\n")
 
 html_message = " ".join(html_report)
 
