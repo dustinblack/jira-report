@@ -2,7 +2,7 @@ name: Send Jira Status Report
 
 on:
   schedule:
-    - cron: '00 08 * * 1-5'
+    - cron: '00 08 * * 1-2'
   push:
 
 jobs:
