@@ -189,7 +189,6 @@ try:
             jql_str=args.jql,
             json_result=True,
             maxResults=100,
-            # expand="changelog",
             fields=[
                 "comment",
                 "assignee",
@@ -224,12 +223,29 @@ if issues[0]["total"] > 0:
             updated_time = datetime.strptime(
                 result["fields"]["updated"], "%Y-%m-%dT%H:%M:%S.%f%z"
             )
+
+            if result["fields"]["customfield_12311140"]:
+                epic_jql = f"issue = {result['fields']['customfield_12311140']}"
+                try:
+                    epic_search = jira_conn.search_issues(
+                    jql_str=epic_jql,
+                    json_result=True,
+                    maxResults=1,
+                    fields=["summary"],
+                    )
+                except:
+                    logger.error("Jira query error!")
+                    sys.exit()
+                epic = f"{result['fields']['customfield_12311140']} - {epic_search['issues'][0]['fields']['summary']}"
+            else:
+                epic = result["fields"]["customfield_12311140"]
+
             report_list.append(
                 {
                     "Issue": f"{result['key']} - {result['fields']['summary']}",
                     "Link": f"{args.jira_server}/browse/{result['key']}",
                     "Owner": owner,
-                    "Epic": result["fields"]["customfield_12311140"],
+                    "Epic": epic,
                     "Epic Link": f"{args.jira_server}/browse/"
                     f"{result['fields']['customfield_12311140']}",
                     "Status": result["fields"]["status"]["name"],
