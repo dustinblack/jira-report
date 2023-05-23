@@ -168,7 +168,7 @@ def send_email(subject, body, sender, user, recipients, password):
     msg = MIMEText(body, "html")
     msg["Subject"] = subject
     msg["From"] = sender
-    msg["To"] =  ", ".join(recipients)
+    msg["To"] = ", ".join(recipients)
     smtp_server = SMTP_SSL(args.email_server, args.smtp_port)
     smtp_server.login(user, password)
     smtp_server.sendmail(sender, recipients, msg.as_string())
@@ -228,10 +228,10 @@ if issues[0]["total"] > 0:
                 epic_jql = f"issue = {result['fields']['customfield_12311140']}"
                 try:
                     epic_search = jira_conn.search_issues(
-                    jql_str=epic_jql,
-                    json_result=True,
-                    maxResults=1,
-                    fields=["summary"],
+                        jql_str=epic_jql,
+                        json_result=True,
+                        maxResults=1,
+                        fields=["summary"],
                     )
                 except:
                     logger.error("Jira query error!")
@@ -262,16 +262,36 @@ if args.recipients and not args.local:
 
     for item in report_list:
         html_report.append("<hr>\n")
+
+        for key, value in item.items():
+            if "Link" in key:
+                if "Epic" not in key:
+                    link = value
+                else:
+                    epic_link = value
+
         for key, value in item.items():
             if "Link" not in key:
                 if "Latest" not in key:
-                    html_report.append(f"<b>{key}</b>: {value}<br>\n")
+                    if "Issue" in key:
+                        html_report.append(
+                            f"<b>{key}</b>: <a href='{link}'>{value}</a><br>"
+                        )
+                    elif "Epic" in key:
+                        if value:
+                            html_report.append(
+                                f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
+                            )
+                        else:
+                            html_report.append(f"<b>{key}</b>: {value}<br>")
+                    else:
+                        html_report.append(f"<b>{key}</b>: {value}<br>\n")
                 else:
                     html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
-            elif "Epic" in key and item["Epic"]:
-                html_report.append(f"({value})<br>\n")
-            elif "Epic" not in key:
-                html_report.append(f"({value})<br>\n")
+            # elif "Epic" in key and item["Epic"]:
+            #     html_report.append(f"({value})<br>\n")
+            # elif "Epic" not in key:
+            #     html_report.append(f"({value})<br>\n")
         html_report.append("\n\n")
 
     html_message = " ".join(html_report)
