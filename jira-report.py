@@ -283,15 +283,11 @@ if args.recipients and not args.local:
                                 f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
                             )
                         else:
-                            html_report.append(f"<b>{key}</b>: {value}<br>")
+                            html_report.append(f"<b>{key}</b>: <span style='color:red'>{value}</span><br>")
                     else:
                         html_report.append(f"<b>{key}</b>: {value}<br>\n")
                 else:
                     html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
-            # elif "Epic" in key and item["Epic"]:
-            #     html_report.append(f"({value})<br>\n")
-            # elif "Epic" not in key:
-            #     html_report.append(f"({value})<br>\n")
         html_report.append("\n\n")
 
     html_message = " ".join(html_report)
