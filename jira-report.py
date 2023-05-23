@@ -226,13 +226,12 @@ if issues[0]["total"] > 0:
             )
             report_list.append(
                 {
-                    "Issue": result["key"],
+                    "Issue": f"{result['key']} - {result['fields']['summary']}",
                     "Link": f"{args.jira_server}/browse/{result['key']}",
                     "Owner": owner,
                     "Epic": result["fields"]["customfield_12311140"],
                     "Epic Link": f"{args.jira_server}/browse/"
                     f"{result['fields']['customfield_12311140']}",
-                    "Summary": result["fields"]["summary"],
                     "Status": result["fields"]["status"]["name"],
                     "Updated": datetime.strftime(updated_time, "%a %d %b %Y, %I:%M%p"),
                     "Latest Update": latest_comment,
