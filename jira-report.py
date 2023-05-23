@@ -256,40 +256,26 @@ if issues[0]["total"] > 0:
 else:
     logger.warning("Query returned no results!")
 
-report = [f"Issue count: {issue_count}\n\n"]
-
-for item in report_list:
-    report.append("==========\n")
-    for key, value in item.items():
-        if "Link" not in key:
-            report.append(f"{key}: {value}\n")
-        elif "Epic" in key and item["Epic"]:
-            report.append(f"({value})\n")
-        elif "Epic" not in key:
-            report.append(f"({value})\n")
-    report.append("\n\n")
-
-report_message = " ".join(report)
-
-html_report = [f"Issue count: {issue_count}<br><br>\n"]
-
-for item in report_list:
-    html_report.append("<hr>\n")
-    for key, value in item.items():
-        if "Link" not in key:
-            if "Latest" not in key:
-                html_report.append(f"<b>{key}</b>: {value}<br>\n")
-            else:
-                html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
-        elif "Epic" in key and item["Epic"]:
-            html_report.append(f"({value})<br>\n")
-        elif "Epic" not in key:
-            html_report.append(f"({value})<br>\n")
-    html_report.append("\n\n")
-
-html_message = " ".join(html_report)
-
 if args.recipients and not args.local:
+
+    html_report = [f"Issue count: {issue_count}<br><br>\n"]
+
+    for item in report_list:
+        html_report.append("<hr>\n")
+        for key, value in item.items():
+            if "Link" not in key:
+                if "Latest" not in key:
+                    html_report.append(f"<b>{key}</b>: {value}<br>\n")
+                else:
+                    html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
+            elif "Epic" in key and item["Epic"]:
+                html_report.append(f"({value})<br>\n")
+            elif "Epic" not in key:
+                html_report.append(f"({value})<br>\n")
+        html_report.append("\n\n")
+
+    html_message = " ".join(html_report)
+
     email_body = f"{args.email_message}<br><br>{html_message}"
     recipients_list = args.recipients.split(",")
 
@@ -310,5 +296,21 @@ if args.recipients and not args.local:
     logger.info("Email sent")
 
 else:
+
+    report = [f"Issue count: {issue_count}\n\n"]
+
+    for item in report_list:
+        report.append("==========\n")
+        for key, value in item.items():
+            if "Link" not in key:
+                report.append(f"{key}: {value}\n")
+            elif "Epic" in key and item["Epic"]:
+                report.append(f"({value})\n")
+            elif "Epic" not in key:
+                report.append(f"({value})\n")
+        report.append("\n\n")
+
+    report_message = " ".join(report)
+
     logger.info("Email disabled; Printing query results locally only...\n")
     print(report_message)
