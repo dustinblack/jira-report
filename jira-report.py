@@ -41,6 +41,7 @@ import sys
 from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
+# import pprint
 
 
 parser = ArgumentParser(description="Status report generator from Jira query")
@@ -181,6 +182,10 @@ jira_conn = JIRA(server=args.jira_server, token_auth=(args.jira_token))
 
 logger.info(f"Running Jira query with JQL: {args.jql}")
 
+#test
+# pp = pprint.PrettyPrinter(width=41, compact=True)
+# pp.pprint(jira_conn.search_issues(jql_str=args.jql,json_result=True,maxResults=30))
+
 issues = []
 
 try:
@@ -190,6 +195,8 @@ try:
             json_result=True,
             maxResults=100,
             fields=[
+                "issuetype",
+                "parent",
                 "comment",
                 "assignee",
                 "creator",
@@ -225,6 +232,7 @@ if issues[0]["total"] > 0:
             )
 
             if result["fields"]["customfield_12311140"]:
+                # Get the epic name based on the epic ID (customfield_12311140)
                 epic_jql = f"issue = {result['fields']['customfield_12311140']}"
                 try:
                     epic_search = jira_conn.search_issues(
@@ -237,7 +245,11 @@ if issues[0]["total"] > 0:
                     logger.error("Jira query error!")
                     sys.exit()
                 epic = f"{result['fields']['customfield_12311140']} - {epic_search['issues'][0]['fields']['summary']}"
+            elif result["fields"]["issuetype"]["subtask"]:
+                # Subtasks do not return epic IDs, so report the parent
+                epic = f"This is a subtask of {result['fields']['parent']['key']}"
             else:
+                # This should result in 'None'
                 epic = result["fields"]["customfield_12311140"]
 
             report_list.append(
