@@ -290,7 +290,7 @@ if args.recipients and not args.local:
                             f"<b>{key}</b>: <a href='{link}'>{value}</a><br>"
                         )
                     elif "Epic" in key:
-                        if value:
+                        if value and "subtask" not in value:
                             html_report.append(
                                 f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
                             )
@@ -332,7 +332,7 @@ else:
         for key, value in item.items():
             if "Link" not in key:
                 report.append(f"{key}: {value}\n")
-            elif "Epic" in key and item["Epic"]:
+            elif "Epic" in key and item["Epic"] and "subtask" not in item["Epic"]:
                 report.append(f"({value})\n")
             elif "Epic" not in key:
                 report.append(f"({value})\n")
