@@ -272,7 +272,10 @@ if issues[0]["total"] > 0:
                 }
             )
 
-            if subtask:
+            try: subtask
+            except NameError: subtask = None
+
+            if subtask is not None:
                 report_list.append(
                     {
                         "Sub-Task": subtask,
