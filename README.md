@@ -32,7 +32,7 @@ Issue count: 32
  Latest Update: Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 ```
 
-Command syntax:
+## Command syntax
 ```
 $ ./jira-report.py -h
 usage: jira-report.py [-h] --server JIRA_SERVER --token JIRA_TOKEN --jql JQL [--recipients RECIPIENTS] [--email-server EMAIL_SERVER] [--smtp-port SMTP_PORT] [--email-from EMAIL_FROM] [--email-user EMAIL_USER]
@@ -65,3 +65,10 @@ optional arguments:
                         Email password (make sure you use an app password!)
   --local, -l           Do not send emails; only output the report locally (defaults to True if --recipients is empty)
 ```
+
+***Treat these items with care as they provide access to your accounts with your credentials***
+- **`JIRA_TOKEN`** - In your Jira profile, create a *Personal Access Token*. This is the token used by the script.
+- **`EMAIL_PASSWORD`** - Assuming Gmail, you will need to create an *App Password* for your Google account and use that here.
+
+## GitHub Actions Automated Reports
+The [.github/workflows/report.yaml](.github/workflows/report.yaml) file provides automation to run this script directly from GitHub Actions. The configuration provided here runs the script as a scheduled cron job. Parameters are passed to the script using GitHub Actions Secrets for this repo, which provide for automatic masking of the information in the script output. You will need to define these secrets and adjust the script as appropriate for your needs.
