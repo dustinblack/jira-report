@@ -42,7 +42,7 @@ from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
 
-import pprint
+# import pprint
 
 
 parser = ArgumentParser(description="Status report generator from Jira query")
@@ -221,6 +221,7 @@ if issues[0]["total"] > 0:
     for issue in issues:
         for result in issue["issues"]:
             result_dict = {}
+            subtask = None
 
             if result["fields"]["assignee"] is None:
                 owner = "NO OWNER"
@@ -272,11 +273,6 @@ if issues[0]["total"] > 0:
             else:
                 # This should result in 'None'
                 epic = result["fields"]["customfield_12311140"]
-
-            try:
-                subtask
-            except NameError:
-                subtask = None
 
             result_dict["Issue"] = f"{result['key']} - {result['fields']['summary']}"
             result_dict["Link"] = f"{args.jira_server}/browse/{result['key']}"
