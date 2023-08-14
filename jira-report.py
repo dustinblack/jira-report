@@ -41,6 +41,7 @@ import sys
 from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
+
 # import pprint
 
 
@@ -182,7 +183,7 @@ jira_conn = JIRA(server=args.jira_server, token_auth=(args.jira_token))
 
 logger.info(f"Running Jira query with JQL: {args.jql}")
 
-#test
+# test
 # pp = pprint.PrettyPrinter(width=41, compact=True)
 # pp.pprint(jira_conn.search_issues(jql_str=args.jql,json_result=True,maxResults=30))
 
@@ -263,17 +264,19 @@ if issues[0]["total"] > 0:
             else:
                 # This should result in 'None'
                 epic = result["fields"]["customfield_12311140"]
-                
+
             report_list.append(
                 {
                     "Issue": f"{result['key']} - {result['fields']['summary']}",
                     "Link": f"{args.jira_server}/browse/{result['key']}",
                 }
             )
-            
+
             if subtask:
                 report_list.append(
-                    {"Sub-Task": subtask,}
+                    {
+                        "Sub-Task": subtask,
+                    }
                 )
 
             report_list.append(
@@ -317,7 +320,9 @@ if args.recipients and not args.local:
                                 f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
                             )
                         else:
-                            html_report.append(f"<b>{key}</b>: <span style='color:red'>{value}</span><br>")
+                            html_report.append(
+                                f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
+                            )
                     else:
                         html_report.append(f"<b>{key}</b>: {value}<br>\n")
                 else:
