@@ -246,16 +246,38 @@ if issues[0]["total"] > 0:
                     sys.exit()
                 epic = f"{result['fields']['customfield_12311140']} - {epic_search['issues'][0]['fields']['summary']}"
             elif result["fields"]["issuetype"]["subtask"]:
-                # Subtasks do not return epic IDs, so report the parent
-                epic = f"This is a subtask of {result['fields']['parent']['key']}"
+                # Subtasks do not return epic IDs, so get it from the parent
+                subtask_jql = f"issue = {result['fields']['parent']['key']}"
+                try:
+                    epic_search = jira_conn.search_issues(
+                        jql_str=subtask_jql,
+                        json_result=True,
+                        maxResults=1,
+                        fields=["summary"],
+                    )
+                except:
+                    logger.error("Jira query error!")
+                    sys.exit()
+                epic = f"{result['fields']['customfield_12311140']} - {epic_search['issues'][0]['fields']['summary']}"
+                subtask = f"This is a subtask of {result['fields']['parent']['key']}"
             else:
                 # This should result in 'None'
                 epic = result["fields"]["customfield_12311140"]
-
+                
             report_list.append(
                 {
                     "Issue": f"{result['key']} - {result['fields']['summary']}",
                     "Link": f"{args.jira_server}/browse/{result['key']}",
+                }
+            )
+            
+            if subtask:
+                report_list.append(
+                    {"Sub-Task": subtask,}
+                )
+
+            report_list.append(
+                {
                     "Owner": owner,
                     "Epic": epic,
                     "Epic Link": f"{args.jira_server}/browse/"
