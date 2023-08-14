@@ -245,7 +245,9 @@ if issues[0]["total"] > 0:
                 except:
                     logger.error("Jira query error!")
                     sys.exit()
-                epic = f"{result['fields']['customfield_12311140']} - {epic_search['issues'][0]['fields']['summary']}"
+                epic_number = f"{result['fields']['customfield_12311140']}"
+                epic_summary = f"{epic_search['issues'][0]['fields']['summary']}"
+                epic = f"{epic_number} - {epic_summary}"
             elif result["fields"]["issuetype"]["subtask"]:
                 # Subtasks do not return epic IDs, so get it from the parent
                 subtask_jql = f"issue = {result['fields']['parent']['key']}"
@@ -259,7 +261,11 @@ if issues[0]["total"] > 0:
                 except:
                     logger.error("Jira query error!")
                     sys.exit()
-                epic = f"{epic_search['issues'][0]['fields']['customfield_12311140']} - {epic_search['issues'][0]['fields']['summary']}"
+                epic_number = (
+                    f"{epic_search['issues'][0]['fields']['customfield_12311140']}"
+                )
+                epic_summary = f"{epic_search['issues'][0]['fields']['summary']}"
+                epic = f"{epic_number} - {epic_summary}"
                 subtask = f"This is a subtask of {result['fields']['parent']['key']}"
             else:
                 # This should result in 'None'
@@ -272,8 +278,10 @@ if issues[0]["total"] > 0:
                 }
             )
 
-            try: subtask
-            except NameError: subtask = None
+            try:
+                subtask
+            except NameError:
+                subtask = None
 
             if subtask is not None:
                 report_list.append(
@@ -286,8 +294,7 @@ if issues[0]["total"] > 0:
                 {
                     "Owner": owner,
                     "Epic": epic,
-                    "Epic Link": f"{args.jira_server}/browse/"
-                    f"{result['fields']['customfield_12311140']}",
+                    "Epic Link": f"{args.jira_server}/browse/{epic_number}",
                     "Status": result["fields"]["status"]["name"],
                     "Updated": datetime.strftime(updated_time, "%a %d %b %Y, %I:%M%p"),
                     "Latest Update": latest_comment,
