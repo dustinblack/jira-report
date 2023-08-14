@@ -254,12 +254,12 @@ if issues[0]["total"] > 0:
                         jql_str=subtask_jql,
                         json_result=True,
                         maxResults=1,
-                        fields=["summary"],
+                        fields=["summary", "customfield_12311140"],
                     )
                 except:
                     logger.error("Jira query error!")
                     sys.exit()
-                epic = f"{result['fields']['customfield_12311140']} - {epic_search['issues'][0]['fields']['summary']}"
+                epic = f"{epic_search['issues'][0]['fields']['customfield_12311140']} - {epic_search['issues'][0]['fields']['summary']}"
                 subtask = f"This is a subtask of {result['fields']['parent']['key']}"
             else:
                 # This should result in 'None'
