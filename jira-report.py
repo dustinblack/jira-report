@@ -42,7 +42,7 @@ from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
 
-# import pprint
+import pprint
 
 
 parser = ArgumentParser(description="Status report generator from Jira query")
@@ -220,6 +220,8 @@ if issues[0]["total"] > 0:
     logger.info(f"Issue count: {issue_count}")
     for issue in issues:
         for result in issue["issues"]:
+            result_dict = {}
+
             if result["fields"]["assignee"] is None:
                 owner = "NO OWNER"
             else:
@@ -271,35 +273,26 @@ if issues[0]["total"] > 0:
                 # This should result in 'None'
                 epic = result["fields"]["customfield_12311140"]
 
-            report_list.append(
-                {
-                    "Issue": f"{result['key']} - {result['fields']['summary']}",
-                    "Link": f"{args.jira_server}/browse/{result['key']}",
-                }
-            )
-
             try:
                 subtask
             except NameError:
                 subtask = None
 
+            result_dict["Issue"] = f"{result['key']} - {result['fields']['summary']}"
+            result_dict["Link"] = f"{args.jira_server}/browse/{result['key']}"
             if subtask is not None:
-                report_list.append(
-                    {
-                        "Sub-Task": subtask,
-                    }
-                )
-
-            report_list.append(
-                {
-                    "Owner": owner,
-                    "Epic": epic,
-                    "Epic Link": f"{args.jira_server}/browse/{epic_number}",
-                    "Status": result["fields"]["status"]["name"],
-                    "Updated": datetime.strftime(updated_time, "%a %d %b %Y, %I:%M%p"),
-                    "Latest Update": latest_comment,
-                }
+                result_dict["Sub-Task"] = subtask
+            result_dict["Owner"] = owner
+            result_dict["Epic"] = epic
+            result_dict["Epic Link"] = f"{args.jira_server}/browse/{epic_number}"
+            result_dict["Status"] = result["fields"]["status"]["name"]
+            result_dict["Updated"] = datetime.strftime(
+                updated_time, "%a %d %b %Y, %I:%M%p"
             )
+            result_dict["Latest Update"] = latest_comment
+
+            report_list.append(result_dict)
+
 else:
     logger.warning("Query returned no results!")
 
