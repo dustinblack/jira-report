@@ -17,7 +17,8 @@ limitations under the License.
 
 ===
 
-Work inspired by https://github.com/jtaleric/nudge/tree/5cc1be48a64646839bd2f5aa751ac7266da7b3c9
+Work inspired by:
+ https://github.com/jtaleric/nudge/tree/5cc1be48a64646839bd2f5aa751ac7266da7b3c9
 
 Copyright 2021 Joe Talerico
 
@@ -64,7 +65,12 @@ parser.add_argument(
     help="Jira authentication token",
 )
 parser.add_argument(
-    "--jql", "-J", type=str, dest="jql", required=True, help="JQL query for Jira search"
+    "--jql",
+    "-J",
+    type=str,
+    dest="jql",
+    required=True,
+    help="JQL query for Jira search",
 )
 parser.add_argument(
     "--recipients",
@@ -186,6 +192,10 @@ logger.info(f"Running Jira query with JQL: {args.jql}")
 # test
 # pp = pprint.PrettyPrinter(width=41, compact=True)
 # pp.pprint(jira_conn.search_issues(jql_str=args.jql,json_result=True,maxResults=30))
+
+# Grace period in days for issue updates before highlighting them
+# in red in the HTML report
+update_grace_days = 10
 
 issues = []
 
@@ -314,7 +324,7 @@ if args.recipients and not args.local:
                             f"<b>{key}</b>: <a href='{link}'>{value}</a><br>"
                         )
                     elif "Epic" in key:
-                        if value and "subtask" not in value:
+                        if value:
                             html_report.append(
                                 f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
                             )
@@ -322,6 +332,17 @@ if args.recipients and not args.local:
                             html_report.append(
                                 f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
                             )
+                    elif "Updated" in key:
+                        updated_datetime = datetime.strptime(
+                            value, "%a %d %b %Y, %I:%M%p"
+                        )
+                        delta = datetime.now() - updated_datetime
+                        if delta.days >= update_grace_days:
+                            html_report.append(
+                                f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
+                            )
+                        else:
+                            html_report.append(f"<b>{key}</b>: {value}<br>")
                     else:
                         html_report.append(f"<b>{key}</b>: {value}<br>\n")
                 else:
