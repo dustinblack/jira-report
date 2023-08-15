@@ -1,8 +1,13 @@
 # jira-report
 Generates a status report for issues based on a Jira JQL query. All input parameters are passed as command flags.
 
-By default, the command expects to generate an HTML email and send it via an SMTP server via SSL with authentication.
-Passing the `--local / -l` flag will generate a local text report.
+By default, the command expects to **generate an HTML email and send it via an SMTP server** using SSL with authentication.
+
+Missing Epic links and update dates older than a grace period (by default 10 days) will be ${\textsf{\color{red}highlighted\ in\ red}}$ in the HTML report.
+
+Passing the `--local / -l` flag will generate a local text-only report.
+
+
 
 Sample output (with `-l`):
 ```
