@@ -48,3 +48,20 @@ jobs:
           --email-user $EMAIL_USER --email-server "smtp.gmail.com" \
           --email-subject "$(eval echo $PANDA_SUBJECT)" --email-message "$(eval echo $PANDA_MESSAGE)" \
           --email-password $EMAIL_TOKEN
+      - name: Run auto report
+        env:
+          JIRA_SERVER: ${{ secrets.REDHAT_PERFBOT_JIRA_SERVER }}
+          JIRA_TOKEN: ${{ secrets.REDHAT_PERFBOT_JIRA_TOKEN }}
+          AUTO_JQL: ${{ secrets.REDHAT_PERFBOT_AUTO_JQL }}
+          EMAIL_USER: ${{ secrets.REDHAT_PERFBOT_EMAIL_USER }}
+          EMAIL_TOKEN: ${{ secrets.REDHAT_PERFBOT_EMAIL_TOKEN }}
+          AUTO_RECIPIENTS: ${{ secrets.REDHAT_PERFBOT_AUTO_RECIPIENTS }}
+          AUTO_SUBJECT: ${{ secrets.REDHAT_PERFBOT_AUTO_SUBJECT }}
+          AUTO_MESSAGE: ${{ secrets.REDHAT_PERFBOT_AUTO_MESSAGE }}
+        run: |
+          ./jira-report.py --server $JIRA_SERVER --token $JIRA_TOKEN \
+          --jql "$AUTO_JQL" --recipients "$AUTO_RECIPIENTS" \
+          --email-from perfscale-automation@redhat.com \
+          --email-user $EMAIL_USER --email-server "smtp.gmail.com" \
+          --email-subject "$(eval echo $AUTO_SUBJECT)" --email-message "$(eval echo $AUTO_MESSAGE)" \
+          --email-password $EMAIL_TOKEN
