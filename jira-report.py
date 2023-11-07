@@ -43,54 +43,54 @@ from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
 
-# import pprint
+import pprint
 
 
 parser = ArgumentParser(description="Status report generator from Jira query")
 
 parser.add_argument(
-    "--server",
     "-S",
+    "--server",
     type=str,
     dest="jira_server",
     required=True,
     help="Jira server URL",
 )
 parser.add_argument(
-    "--token",
     "-T",
+    "--token",
     type=str,
     dest="jira_token",
     required=True,
     help="Jira authentication token",
 )
 parser.add_argument(
-    "--jql",
     "-J",
+    "--jql",
     type=str,
     dest="jql",
     required=True,
     help="JQL query for Jira search",
 )
 parser.add_argument(
-    "--recipients",
     "-r",
+    "--recipients",
     type=str,
     dest="recipients",
     required=False,
     help="Comma-separated list of email addresses to receive report",
 )
 parser.add_argument(
-    "--email-server",
     "-e",
+    "--email-server",
     type=str,
     dest="email_server",
     required=False,
     help="Email SMTP server URL (assumes SSL)",
 )
 parser.add_argument(
-    "--smtp-port",
     "-p",
+    "--smtp-port",
     type=int,
     dest="smtp_port",
     required=False,
@@ -98,32 +98,32 @@ parser.add_argument(
     help="Email SMTP server port number",
 )
 parser.add_argument(
-    "--email-from",
     "-f",
+    "--email-from",
     type=str,
     dest="email_from",
     required=False,
     help="Email address to send from",
 )
 parser.add_argument(
-    "--email-user",
     "-u",
+    "--email-user",
     type=str,
     dest="email_user",
     required=False,
     help="Email user address if different than email from address",
 )
 parser.add_argument(
-    "--email-subject",
     "-s",
+    "--email-subject",
     type=str,
     dest="email_subject",
     required=False,
     help="Email subject line",
 )
 parser.add_argument(
-    "--email-message",
     "-m",
+    "--email-message",
     type=str,
     dest="email_message",
     required=False,
@@ -131,16 +131,39 @@ parser.add_argument(
     help="Email message to insert above query results",
 )
 parser.add_argument(
-    "--email-password",
     "-w",
+    "--email-password",
     type=str,
     dest="email_password",
     required=False,
     help="Email password (make sure you use an app password!)",
 )
 parser.add_argument(
-    "--local",
+    "-x",
+    "--exclude-comment-author",
+    type=str,
+    dest="author_filter",
+    required=False,
+    default="bot",
+    help=(
+        "Comments by authors that include this text will be skipped (defaults to 'bot')"
+    ),
+)
+parser.add_argument(
+    "-g",
+    "--update-grace-days",
+    type=str,
+    dest="update_grace_days",
+    required=False,
+    default=10,
+    help=(
+        "Grace period in days for issue updates before highlighting them in red in"
+        " the HTML report (defaults to 10)"
+    ),
+)
+parser.add_argument(
     "-l",
+    "--local",
     action="store_true",
     dest="local",
     required=False,
@@ -189,16 +212,13 @@ jira_conn = JIRA(server=args.jira_server, token_auth=(args.jira_token))
 
 logger.info(f"Running Jira query with JQL: {args.jql}")
 
-# test
-# pp = pprint.PrettyPrinter(width=41, compact=True)
+# debug
+pp = pprint.PrettyPrinter(width=41, compact=True)
 # pp.pprint(jira_conn.search_issues(jql_str=args.jql,json_result=True,maxResults=30))
-
-# Grace period in days for issue updates before highlighting them
-# in red in the HTML report
-update_grace_days = 10
 
 issues = []
 
+# Build the array of issues from the JQL query
 try:
     issues.append(
         jira_conn.search_issues(
@@ -223,6 +243,10 @@ except:
     logger.error("Jira query error!")
     sys.exit()
 
+# debug
+# pp.pprint(issues)
+# exit()
+
 report_list = []
 
 if issues[0]["total"] > 0:
@@ -237,8 +261,24 @@ if issues[0]["total"] > 0:
                 owner = "NO OWNER"
             else:
                 owner = result["fields"]["assignee"]["displayName"]
+
             if len(result["fields"]["comment"]["comments"]) > 0:
-                latest_comment = result["fields"]["comment"]["comments"][-1]["body"]
+                comment_number = -1
+                try:
+                    while (
+                        args.author_filter
+                        in result["fields"]["comment"]["comments"][comment_number][
+                            "author"
+                        ]["name"]
+                    ):
+                        comment_number -= 1
+                        # debug
+                        # print(f'Skipped comment: {result["fields"]["comment"]["comments"][comment_number]["body"]}')
+                    latest_comment = result["fields"]["comment"]["comments"][
+                        comment_number
+                    ]["body"]
+                except IndexError:
+                    latest_comment = "None (filtered)"
             else:
                 latest_comment = "None"
             updated_time = datetime.strptime(
@@ -286,6 +326,7 @@ if issues[0]["total"] > 0:
 
             result_dict["Issue"] = f"{result['key']} - {result['fields']['summary']}"
             result_dict["Link"] = f"{args.jira_server}/browse/{result['key']}"
+
             if subtask is not None:
                 result_dict["Sub-Task"] = subtask
             result_dict["Owner"] = owner
@@ -303,7 +344,6 @@ else:
     logger.warning("Query returned no results!")
 
 if args.recipients and not args.local:
-
     html_report = [f"Issue count: {issue_count}<br><br>\n"]
 
     for item in report_list:
@@ -337,7 +377,7 @@ if args.recipients and not args.local:
                             value, "%a %d %b %Y, %I:%M%p"
                         )
                         delta = datetime.now() - updated_datetime
-                        if delta.days >= update_grace_days:
+                        if delta.days >= args.update_grace_days:
                             html_report.append(
                                 f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
                             )
@@ -371,7 +411,6 @@ if args.recipients and not args.local:
     logger.info("Email sent")
 
 else:
-
     report = [f"Issue count: {issue_count}\n\n"]
 
     for item in report_list:
