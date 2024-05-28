@@ -32,6 +32,7 @@ jobs:
           --email-subject "$(eval echo $TELCO_SUBJECT)" --email-message "$(eval echo $TELCO_MESSAGE)" \
           --email-password $EMAIL_TOKEN
       - name: Run panda report
+        if: '!cancelled()'
         env:
           JIRA_SERVER: ${{ secrets.REDHAT_PERFBOT_JIRA_SERVER }}
           JIRA_TOKEN: ${{ secrets.REDHAT_PERFBOT_JIRA_TOKEN }}
@@ -49,6 +50,7 @@ jobs:
           --email-subject "$(eval echo $PANDA_SUBJECT)" --email-message "$(eval echo $PANDA_MESSAGE)" \
           --email-password $EMAIL_TOKEN
       - name: Run auto report
+        if: '!cancelled()'
         env:
           JIRA_SERVER: ${{ secrets.REDHAT_PERFBOT_JIRA_SERVER }}
           JIRA_TOKEN: ${{ secrets.REDHAT_PERFBOT_JIRA_TOKEN }}
