@@ -341,7 +341,8 @@ if issues[0]["total"] > 0:
             report_list.append(result_dict)
 
 else:
-    logger.warning("Query returned no results!")
+    logger.error("Query returned no results!")
+    sys.exit(1)
 
 if args.recipients and not args.local:
     html_report = [f"Issue count: {issue_count}<br><br>\n"]
