@@ -35,18 +35,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from argparse import ArgumentParser
-from jira import JIRA
-from logger import logger
 import sys
+import pprint
 from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from jira import JIRA
+from logger import logger
 
-import pprint
 
 
-parser = ArgumentParser(description="Status report generator from Jira query")
+parser = ArgumentParser(
+    description="Status report generator from Jira query",
+    formatter_class=ArgumentDefaultsHelpFormatter,
+)
 
 parser.add_argument(
     "-S",
@@ -146,7 +149,7 @@ parser.add_argument(
     required=False,
     default="bot",
     help=(
-        "Comments by authors that include this text will be skipped (defaults to 'bot')"
+        "Comments by authors that include this text will be skipped"
     ),
 )
 parser.add_argument(
@@ -158,7 +161,7 @@ parser.add_argument(
     default=10,
     help=(
         "Grace period in days for issue updates before highlighting them in red in"
-        " the HTML report (defaults to 10)"
+        " the HTML report"
     ),
 )
 parser.add_argument(
