@@ -29,7 +29,7 @@ from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from jira import JIRA
+from jira import JIRA, JIRAError
 from logger import logger
 
 
@@ -230,9 +230,9 @@ try:
             ],
         )
     )
-except:
-    logger.error("Jira query error!")
-    sys.exit()
+except JIRAError as error:
+    logger.error(f"Jira query error:\n{error}")
+    sys.exit(1)
 
 # debug
 # pp.pprint(issues)
@@ -286,9 +286,9 @@ if issues[0]["total"] > 0:
                         maxResults=1,
                         fields=["summary"],
                     )
-                except:
-                    logger.error("Jira query error!")
-                    sys.exit()
+                except JIRAError as error:
+                    logger.error(f"Jira query error:\n{error}")
+                    sys.exit(1)
                 epic_number = f"{result['fields']['customfield_12311140']}"
                 epic_summary = f"{epic_search['issues'][0]['fields']['summary']}"
                 epic = f"{epic_number} - {epic_summary}"
@@ -302,9 +302,9 @@ if issues[0]["total"] > 0:
                         maxResults=1,
                         fields=["summary", "customfield_12311140"],
                     )
-                except:
-                    logger.error("Jira query error!")
-                    sys.exit()
+                except JIRAError as error:
+                    logger.error(f"Jira query error:\n{error}")
+                    sys.exit(1)
                 epic_number = (
                     f"{epic_search['issues'][0]['fields']['customfield_12311140']}"
                 )
