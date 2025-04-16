@@ -145,7 +145,7 @@ cmd = [
         "-m",
         f"\"{myjob['email']['message']}\"",
         "-J",
-        f"\"{myjob['jql']}\"",
+        myjob['jql'],
         #TODO make optional
         "-x",
         ",".join(myjob["exclude_comment_authors"]),
