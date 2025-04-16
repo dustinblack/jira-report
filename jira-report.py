@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Copyright 2023 Dustin Black
+Copyright 2025 Dustin Black
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,18 +21,6 @@ Work inspired by:
  https://github.com/jtaleric/nudge/tree/5cc1be48a64646839bd2f5aa751ac7266da7b3c9
 
 Copyright 2021 Joe Talerico
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 """
 
 import sys
@@ -381,7 +369,7 @@ if args.recipients and not args.local:
                             value, "%a %d %b %Y, %I:%M%p"
                         )
                         delta = datetime.now() - updated_datetime
-                        if delta.days >= args.update_grace_days:
+                        if delta.days >= int(args.update_grace_days):
                             html_report.append(
                                 f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
                             )
