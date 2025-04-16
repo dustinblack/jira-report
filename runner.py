@@ -141,9 +141,9 @@ cmd = [
         "-r",
         ",".join(myjob["email"]["recipients"]),
         "-s",
-        f"\"{myjob['email']['subject']}\"",
+        myjob['email']['subject'],
         "-m",
-        f"\"{myjob['email']['message']}\"",
+        myjob['email']['message'],
         "-J",
         myjob['jql'],
         #TODO make optional
