@@ -3,9 +3,10 @@ ARG CONTAINER_BASE="centos:stream9"
 FROM $CONTAINER_BASE
 
 COPY jira-report.py /usr/bin/jira-report.py
+COPY runner.py /usr/bin/runner.py
 COPY requirements.txt /requirements.txt
 
-RUN dnf -y install cronie git \
+RUN dnf -y install cronie \
  && dnf -y update \
  && dnf clean all \
  && rm -rf /var/cache/dnf \
