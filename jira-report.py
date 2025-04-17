@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Copyright 2023 Dustin Black
+Copyright 2025 Dustin Black
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,18 +21,6 @@ Work inspired by:
  https://github.com/jtaleric/nudge/tree/5cc1be48a64646839bd2f5aa751ac7266da7b3c9
 
 Copyright 2021 Joe Talerico
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 """
 
 import sys
@@ -41,7 +29,7 @@ from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from jira import JIRA
+from jira import JIRA, JIRAError
 from logger import logger
 
 
@@ -242,9 +230,9 @@ try:
             ],
         )
     )
-except:
-    logger.error("Jira query error!")
-    sys.exit()
+except JIRAError as error:
+    logger.error(f"Jira query error:\n{error}")
+    sys.exit(1)
 
 # debug
 # pp.pprint(issues)
@@ -298,9 +286,9 @@ if issues[0]["total"] > 0:
                         maxResults=1,
                         fields=["summary"],
                     )
-                except:
-                    logger.error("Jira query error!")
-                    sys.exit()
+                except JIRAError as error:
+                    logger.error(f"Jira query error:\n{error}")
+                    sys.exit(1)
                 epic_number = f"{result['fields']['customfield_12311140']}"
                 epic_summary = f"{epic_search['issues'][0]['fields']['summary']}"
                 epic = f"{epic_number} - {epic_summary}"
@@ -314,9 +302,9 @@ if issues[0]["total"] > 0:
                         maxResults=1,
                         fields=["summary", "customfield_12311140"],
                     )
-                except:
-                    logger.error("Jira query error!")
-                    sys.exit()
+                except JIRAError as error:
+                    logger.error(f"Jira query error:\n{error}")
+                    sys.exit(1)
                 epic_number = (
                     f"{epic_search['issues'][0]['fields']['customfield_12311140']}"
                 )
@@ -381,7 +369,7 @@ if args.recipients and not args.local:
                             value, "%a %d %b %Y, %I:%M%p"
                         )
                         delta = datetime.now() - updated_datetime
-                        if delta.days >= args.update_grace_days:
+                        if delta.days >= int(args.update_grace_days):
                             html_report.append(
                                 f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
                             )
