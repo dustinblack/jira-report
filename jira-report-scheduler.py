@@ -70,6 +70,7 @@ print(list_cmd[1].stdout)
 clear_cmd = run_cmd(["crontab", "-r"])
 
 print("Updating crontab...")
+new_crontab = ""
 for job in jobs["jira_report_jobs"]:
     job_id = job["job_id"]
     cron_schedule = job["cron_schedule"]
@@ -84,6 +85,7 @@ for job in jobs["jira_report_jobs"]:
         args.input_path
         ],
     )
+    new_crontab += f"{line_cmd[1].stdout};"
 
-    create_cmd = run_cmd(["crontab", "-"], cmd_input=line_cmd[1].stdout)
-    print(create_cmd[1].stdout)
+create_cmd = run_cmd(["crontab", "-"], cmd_input=new_crontab)
+print(create_cmd[1].stdout)
