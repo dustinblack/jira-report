@@ -98,7 +98,9 @@ for job in jobs["jira_report_jobs"]:
         "-j",
         job_id,
         "-i",
-        args.input_path
+        args.input_path,
+        ">/proc/1/fd/1",
+        "2>&1",
         ],
     )
     new_crontab += f"{line_cmd[1].stdout}"
