@@ -17,10 +17,25 @@ limitations under the License.
 """
 
 import sys
+import os
 import subprocess
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import yaml
+
+env_vars = {}
+for var in (
+    "jira_server",
+    "jira_token",
+    "email_server",
+    "email_from",
+    "email_user",
+    "email_token"
+):
+    try:
+        env_vars[var] = os.environ[var]
+    except KeyError:
+        env_vars[var] = None
 
 parser = ArgumentParser(
     description="Runner from YAML for jira-report.py",
@@ -33,7 +48,8 @@ parser.add_argument(
     "--server",
     type=str,
     dest="jira_server",
-    required=True,
+    required=False,
+    default=env_vars["jira_server"],
     help="Full Jira server URL including https://",
 )
 parser.add_argument(
@@ -41,7 +57,8 @@ parser.add_argument(
     "--token",
     type=str,
     dest="jira_token",
-    required=True,
+    required=False,
+    default=env_vars["jira_token"],
     help="Jira user authentication token; Create this in your Jira user profile",
 )
 parser.add_argument(
@@ -50,7 +67,7 @@ parser.add_argument(
     type=str,
     dest="email_server",
     required=False,
-    default="smtp.gmail.com",
+    default=env_vars["email_server"],
     help="Email SMTP server URL (assumes SSL)",
 )
 # parser.add_argument(
@@ -68,6 +85,7 @@ parser.add_argument(
     type=str,
     dest="email_from",
     required=False,
+    default=env_vars["email_from"],
     help="Email address to send from if different from the the email user",
 )
 parser.add_argument(
@@ -75,7 +93,8 @@ parser.add_argument(
     "--email-user",
     type=str,
     dest="email_user",
-    required=True,
+    required=False,
+    default=env_vars["email_user"],
     help="Email user account address",
 )
 parser.add_argument(
@@ -83,7 +102,8 @@ parser.add_argument(
     "--email-password",
     type=str,
     dest="email_password",
-    required=True,
+    required=False,
+    default=env_vars["email_token"],
     help="Email password (make sure you use an app password!)",
 )
 
