@@ -153,10 +153,10 @@ cmd = [
     ]
 
 if args.email_from:
-    cmd.append(
+    cmd.extend([
         "-f",
         args.email_from,
-    )
+    ])
 
 print(f"\n{' '.join(cmd)}")
 
