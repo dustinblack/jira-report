@@ -35,7 +35,7 @@ for var in (
     try:
         env_vars[var] = os.environ[var]
     except KeyError:
-        env_vars[var] = None
+        env_vars[var] = ""
 
 parser = ArgumentParser(
     description="Runner from YAML for jira-report.py",
@@ -134,14 +134,10 @@ except:
     print("Error reading input file!")
     sys.exit(1)
 
-print(jobs)
-
 for job in jobs["jira_report_jobs"]:
     if args.job_id in job["job_id"]:
         myjob = job
         break
-
-print(f"\n{myjob}")
 
 cmd = [
         "jira-report.py",

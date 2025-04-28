@@ -17,6 +17,7 @@ limitations under the License.
 """
 
 import sys
+import os
 import subprocess
 import yaml
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -70,7 +71,22 @@ print(list_cmd[1].stdout)
 clear_cmd = run_cmd(["crontab", "-r"])
 
 print("Updating crontab...")
+
 new_crontab = ""
+
+for var in (
+    "jira_server",
+    "jira_token",
+    "email_server",
+    "email_from",
+    "email_user",
+    "email_token"
+):
+    try:
+        new_crontab += f"{var}={os.environ[var]};"
+    except KeyError:
+        pass
+
 for job in jobs["jira_report_jobs"]:
     job_id = job["job_id"]
     cron_schedule = job["cron_schedule"]
