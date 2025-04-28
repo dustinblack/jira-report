@@ -83,7 +83,7 @@ for var in (
     "email_token"
 ):
     try:
-        new_crontab += f"{var}={os.environ[var]};"
+        new_crontab += f"{var}={os.environ[var]}\n"
     except KeyError:
         pass
 
@@ -101,7 +101,7 @@ for job in jobs["jira_report_jobs"]:
         args.input_path
         ],
     )
-    new_crontab += f"{line_cmd[1].stdout};"
+    new_crontab += f"{line_cmd[1].stdout}"
 
 create_cmd = run_cmd(["crontab", "-"], cmd_input=new_crontab)
 print(create_cmd[1].stdout)
