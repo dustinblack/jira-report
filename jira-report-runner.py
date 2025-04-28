@@ -49,7 +49,7 @@ parser.add_argument(
     "--email-server",
     type=str,
     dest="email_server",
-    required=True,
+    required=False,
     default="smtp.gmail.com",
     help="Email SMTP server URL (assumes SSL)",
 )
