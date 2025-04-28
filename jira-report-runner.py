@@ -124,7 +124,7 @@ for job in jobs["jira_report_jobs"]:
 print(f"\n{myjob}")
 
 cmd = [
-        "./jira-report.py",
+        "jira-report.py",
         "-S",
         args.jira_server,
         "-T",
