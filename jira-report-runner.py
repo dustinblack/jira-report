@@ -34,7 +34,7 @@ parser.add_argument(
     type=str,
     dest="jira_server",
     required=True,
-    help="Jira server URL",
+    help="Full Jira server URL including https://",
 )
 parser.add_argument(
     "-T",
@@ -42,7 +42,7 @@ parser.add_argument(
     type=str,
     dest="jira_token",
     required=True,
-    help="Jira authentication token",
+    help="Jira user authentication token; Create this in your Jira user profile",
 )
 parser.add_argument(
     "-e",
@@ -50,6 +50,7 @@ parser.add_argument(
     type=str,
     dest="email_server",
     required=True,
+    default="smtp.gmail.com",
     help="Email SMTP server URL (assumes SSL)",
 )
 # parser.add_argument(
@@ -66,8 +67,8 @@ parser.add_argument(
     "--email-from",
     type=str,
     dest="email_from",
-    required=True,
-    help="Email address to send from",
+    required=False,
+    help="Email address to send from if different from the the email user",
 )
 parser.add_argument(
     "-u",
@@ -75,7 +76,7 @@ parser.add_argument(
     type=str,
     dest="email_user",
     required=True,
-    help="Email user address if different than email from address",
+    help="Email user account address",
 )
 parser.add_argument(
     "-w",
@@ -132,8 +133,6 @@ cmd = [
         args.email_server,
         # "-p",
         # args.smtp_port,
-        "-f",
-        args.email_from,
         "-u",
         args.email_user,
         "-w",
@@ -152,6 +151,12 @@ cmd = [
         "-g",
         str(myjob["update_grace_days"]),
     ]
+
+if args.email_from:
+    cmd.append(
+        "-f",
+        args.email_from,
+    )
 
 print(f"\n{' '.join(cmd)}")
 

@@ -45,7 +45,7 @@ parser.add_argument(
     type=str,
     dest="jira_server",
     required=True,
-    help="Jira server URL",
+    help="Full Jira server URL including https://",
 )
 parser.add_argument(
     "-T",
@@ -53,7 +53,7 @@ parser.add_argument(
     type=str,
     dest="jira_token",
     required=True,
-    help="Jira authentication token",
+    help="Jira user authentication token; Create this in your Jira user profile",
 )
 parser.add_argument(
     "-J",
@@ -77,6 +77,7 @@ parser.add_argument(
     type=str,
     dest="email_server",
     required=False,
+    default="smtp.gmail.com",
     help="Email SMTP server URL (assumes SSL)",
 )
 parser.add_argument(
@@ -94,15 +95,15 @@ parser.add_argument(
     type=str,
     dest="email_from",
     required=False,
-    help="Email address to send from",
+    help="Email address to send from if different from the the email user",
 )
 parser.add_argument(
     "-u",
     "--email-user",
     type=str,
     dest="email_user",
-    required=False,
-    help="Email user address if different than email from address",
+    required=True,
+    help="Email user account address",
 )
 parser.add_argument(
     "-s",
@@ -182,8 +183,8 @@ if (
         " --email-password"
     )
 
-if args.email_user is None:
-    args.email_user = args.email_from
+if args.email_from is None:
+    args.email_from = args.email_user
 
 
 def send_email(subject, body, sender, user, recipients, password):
