@@ -18,6 +18,7 @@ limitations under the License.
 
 import sys
 import subprocess
+import yaml
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 parser = ArgumentParser(
@@ -36,19 +37,23 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-def run_cmd(command_list, cmd_stdin=None, cmd_stdout=subprocess.STDOUT, cmd_stderr=subprocess.STDOUT):
+def run_cmd(command_list, cmd_input=None):
+    #FIXME - Initialize cmd_out in case of OSError
+    cmd_out = ""
     try:
         cmd_out = subprocess.run(
             command_list,
             capture_output=True,
-            stdin=cmd_stdin,
-            stdout=cmd_stdout,
-            stderr=cmd_stderr,
+            input=cmd_input,
             text=True,
+            check=False,
         )
     except subprocess.CalledProcessError as err:
         print(f"{err.cmd[0]} failed with return code {err.returncode}:\n{err.output}")
         sys.exit(1)
+    #FIXME -- Listing or removing a crontab that doesn't exist results in "OSError: [Errno 9] Bad file descriptor"
+    except OSError:
+        pass
     return "completed", cmd_out
 
 try:
@@ -61,38 +66,36 @@ except:
 # Clear the crontab
 print("Removing existing crontab...")
 list_cmd = run_cmd(["crontab", "-l"])
-print list_cmd[1]
+print(list_cmd[1].stdout)
 clear_cmd = run_cmd(["crontab", "-r"])
 
 print("Updating crontab...")
 for job in jobs["jira_report_jobs"]:
-  job_id = job["job_id"]
-  cron_schedule = job["cron_schedule"]
-  run_cmd(
-    [
-      "echo",
-      cron_schedule,
-      "jira-report-runner.py",
-      "-S",
-      TODO,
-      "-T",
-      TODO,
-      "-e",
-      TODO,
-      "-f",
-      TODO,
-      "-u",
-      TODO,
-      "-w",
-      TODO,
-      "-j",
-      job_id,
-      "-i",
-      args.input_path
-    ],
-    cmd_stdout=subprocess.PIPE,
-    cmd_stderr=None,
-  )
-  
-  create_cmd = run_cmd(["crontab", "-"], stdin=subprocess.PIPE)
-  print(create_cmd)
+    job_id = job["job_id"]
+    cron_schedule = job["cron_schedule"]
+    line_cmd = run_cmd(
+        [
+        "echo",
+        cron_schedule,
+        "jira-report-runner.py",
+        "-S",
+        TODO,
+        "-T",
+        TODO,
+        "-e",
+        TODO,
+        "-f",
+        TODO,
+        "-u",
+        TODO,
+        "-w",
+        TODO,
+        "-j",
+        job_id,
+        "-i",
+        args.input_path
+        ],
+    )
+
+    create_cmd = run_cmd(["crontab", "-"], cmd_input=line_cmd[1].stdout)
+    print(create_cmd[1].stdout)
