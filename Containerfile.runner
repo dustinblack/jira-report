@@ -6,7 +6,6 @@ COPY jira-report.py /usr/bin/jira-report.py
 COPY jira-report-runner.py /usr/bin/jira-report-runner.py
 COPY jira-report-scheduler.py /usr/bin/jira-report-scheduler.py
 COPY requirements.txt /requirements.txt
-COPY github-ssh-known_hosts /root/.ssh/known_hosts
 
 RUN dnf -y install procps-ng vim-enhanced
 
