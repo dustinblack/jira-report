@@ -33,7 +33,10 @@ parser.add_argument(
     type=str,
     dest="input_path",
     required=True,
-    help="The path to the YAML input file"
+    help=(
+        "The absolute path to the YAML input file -- This is passed to the cron job, "
+        "so a relative path will not work."
+    )
 )
 
 args = parser.parse_args()

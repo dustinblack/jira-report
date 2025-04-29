@@ -9,7 +9,7 @@ COPY requirements.txt /requirements.txt
 
 RUN dnf -y install procps-ng vim-enhanced
 
-RUN dnf -y install cronie \
+RUN dnf -y install cronie git \
  && dnf -y update \
  && dnf clean all \
  && rm -rf /var/cache/dnf \
