@@ -6,4 +6,6 @@ cd $target
 git fetch
 git pull
 
+/usr/bin/jira-report-scheduler.py -i ${target}/subscriptions.yaml
+
 /usr/sbin/crond -n -s

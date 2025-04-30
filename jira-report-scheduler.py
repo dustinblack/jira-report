@@ -106,9 +106,11 @@ for job in jobs["jira_report_jobs"]:
     #     "2>&1",
     #     ],
     # )
-    cron = f"{cron_schedule} jira-report-runner.py -j {job_id} -i {args.input_path} >/proc/1/fd/1 2>&1"
     # new_crontab += f"{line_cmd[1].stdout}"
+    cron = f"{cron_schedule} jira-report-runner.py -j {job_id} -i {args.input_path} >/proc/1/fd/1 2>&1\n"
     new_crontab += cron
+
+new_crontab += "0-59/2 * * * * /usr/bin/startup.sh >/proc/1/fd/1 2>&1 \n"
 
 create_cmd = run_cmd(["crontab", "-"], cmd_input=new_crontab)
 print(create_cmd[1].stdout)
