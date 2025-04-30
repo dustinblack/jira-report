@@ -6,6 +6,7 @@ COPY jira-report.py /usr/bin/jira-report.py
 COPY jira-report-runner.py /usr/bin/jira-report-runner.py
 COPY jira-report-scheduler.py /usr/bin/jira-report-scheduler.py
 COPY requirements.txt /requirements.txt
+COPY startup.sh /usr/bin/startup.sh
 
 RUN dnf -y install procps-ng vim-enhanced
 
@@ -17,4 +18,4 @@ RUN dnf -y install cronie git \
  && python3 -m pip install --upgrade pip \
  && pip3 install -r requirements.txt
 
-ENTRYPOINT ["/usr/sbin/crond", "-n", "-s"]
+ENTRYPOINT ["/usr/bin/startup.sh"]

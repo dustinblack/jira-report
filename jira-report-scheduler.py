@@ -108,8 +108,5 @@ for job in jobs["jira_report_jobs"]:
     )
     new_crontab += f"{line_cmd[1].stdout}"
 
-if "jira_report_schedule_refresh" in os.environ:
-    new_crontab += os.environ["jira_report_schedule_refresh"]
-
 create_cmd = run_cmd(["crontab", "-"], cmd_input=new_crontab)
 print(create_cmd[1].stdout)
