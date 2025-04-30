@@ -6,4 +6,4 @@ cd $target
 git fetch
 git pull
 
-/usr/bin/crond -n -s
+/usr/sbin/crond -n -s
