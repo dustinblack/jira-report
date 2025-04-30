@@ -93,20 +93,22 @@ for var in (
 for job in jobs["jira_report_jobs"]:
     job_id = job["job_id"]
     cron_schedule = job["cron_schedule"]
-    line_cmd = run_cmd(
-        [
-        "echo",
-        cron_schedule,
-        "jira-report-runner.py",
-        "-j",
-        job_id,
-        "-i",
-        args.input_path,
-        ">/proc/1/fd/1",
-        "2>&1",
-        ],
-    )
-    new_crontab += f"{line_cmd[1].stdout}"
+    # line_cmd = run_cmd(
+    #     [
+    #     "echo",
+    #     cron_schedule,
+    #     "jira-report-runner.py",
+    #     "-j",
+    #     job_id,
+    #     "-i",
+    #     args.input_path,
+    #     ">/proc/1/fd/1",
+    #     "2>&1",
+    #     ],
+    # )
+    cron = f"{cron_schedule} jira-report-runner.py -j {job_id} -i {args.input_path} >/proc/1/fd/1 2>&1"
+    # new_crontab += f"{line_cmd[1].stdout}"
+    new_crontab += cron
 
 create_cmd = run_cmd(["crontab", "-"], cmd_input=new_crontab)
 print(create_cmd[1].stdout)
