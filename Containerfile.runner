@@ -15,7 +15,6 @@ RUN dnf -y install cronie git \
  && rm -rf /var/cache/dnf \
  && python3 -m ensurepip \
  && python3 -m pip install --upgrade pip \
- && pip3 install -r requirements.txt \
- && /usr/sbin/crond
+ && pip3 install -r requirements.txt
 
 ENTRYPOINT ["/usr/sbin/crond", "-n", "-s"]
