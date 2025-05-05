@@ -19,6 +19,8 @@ limitations under the License.
 import sys
 import os
 import subprocess
+import re
+import datetime
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import yaml
@@ -155,10 +157,6 @@ cmd = [
         args.email_password,
         "-r",
         ",".join(myjob["email"]["recipients"]),
-        "-s",
-        myjob['email']['subject'],
-        "-m",
-        myjob['email']['message'],
         "-J",
         myjob['jql'],
         #TODO make optional
@@ -167,6 +165,28 @@ cmd = [
         "-g",
         str(myjob["update_grace_days"]),
     ]
+
+# Get and format any date parematers from the subject and message body
+date_format = r"\$\(date *(?:\+[\"\'](.+)[\"\'])*\)"
+date_format_re = re.compile(date_format)
+date_param_re = re.compile(rf"^(.*){date_format}(.*)$")
+now = datetime.datetime.now()
+for opt in (["-s", "subject"], ["-m", "message"]):
+    param_re_match = date_param_re.match(myjob["email"][opt[1]])
+    if param_re_match:
+        msg_str = ""
+        for group in param_re_match.groups():
+            fomat_re_match = date_format_re.match(group)
+            if fomat_re_match:
+                msg_str += now.strftime(str(group))
+            else:
+                msg_str += str(group)
+    else:
+        msg_str = str(myjob["email"][opt[1]])
+    cmd.extend([
+        opt[0],
+        msg_str,
+    ])
 
 if args.email_from:
     cmd.extend([
