@@ -166,19 +166,19 @@ cmd = [
         str(myjob["update_grace_days"]),
     ]
 
+# FIXME -- Does not work with naked $(date)
 # Get and format any date parematers from the subject and message body
-date_format = r"\$\(date *(?:\+[\"\'](.+)[\"\'])*\)"
-date_format_re = re.compile(date_format)
-date_param_re = re.compile(rf"^(.*){date_format}(.*)$")
+date_param_re = re.compile(r"^(.*)(\$\(date +\+[\"\'][^\"\']+[\"\']\))(.*)$")
+quoted_format_re = re.compile(r"^.*[\"\']([^\"\']+)[\"\'].*$")
 now = datetime.datetime.now()
 for opt in (["-s", "subject"], ["-m", "message"]):
     param_re_match = date_param_re.match(myjob["email"][opt[1]])
     if param_re_match:
         msg_str = ""
         for group in param_re_match.groups():
-            fomat_re_match = date_format_re.match(group)
+            fomat_re_match = quoted_format_re.match(str(group))
             if fomat_re_match:
-                msg_str += now.strftime(str(group))
+                msg_str += now.strftime(str(fomat_re_match.groups()[0]))
             else:
                 msg_str += str(group)
     else:
