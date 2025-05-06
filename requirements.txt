@@ -2,3 +2,4 @@ argparse
 jira
 logger
 datetime
+pyyaml
