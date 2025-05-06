@@ -168,17 +168,20 @@ cmd = [
 
 # FIXME -- Does not work with naked $(date)
 # Get and format any date parematers from the subject and message body
-date_param_re = re.compile(r"^(.*)(\$\(date +\+[\"\'][^\"\']+[\"\']\))(.*)$")
-quoted_format_re = re.compile(r"^.*[\"\']([^\"\']+)[\"\'].*$")
+date_param_re = re.compile(r"^(.*)(\$\(date *(?:\+[\"\'][^\"\']+[\"\'])?\))(.*)$")
+date_format_re = re.compile(r"^\$\(date *(?:\+[\"\']([^\"\']+)[\"\'])?\)$")
 now = datetime.datetime.now()
 for opt in (["-s", "subject"], ["-m", "message"]):
     param_re_match = date_param_re.match(myjob["email"][opt[1]])
     if param_re_match:
         msg_str = ""
         for group in param_re_match.groups():
-            fomat_re_match = quoted_format_re.match(str(group))
+            fomat_re_match = date_format_re.match(str(group))
             if fomat_re_match:
-                msg_str += now.strftime(str(fomat_re_match.groups()[0]))
+                    if fomat_re_match.groups()[0]:
+                        msg_str += now.strftime(str(fomat_re_match.groups()[0]))
+                    else:
+                        msg_str += now.strftime("%a %b %e %r %Z %Y")
             else:
                 msg_str += str(group)
     else:
