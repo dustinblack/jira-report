@@ -166,7 +166,6 @@ cmd = [
         str(myjob["update_grace_days"]),
     ]
 
-# FIXME -- Does not work with naked $(date)
 # Get and format any date parematers from the subject and message body
 date_param_re = re.compile(r"^(.*)(\$\(date *(?:\+[\"\'][^\"\']+[\"\'])?\))(.*)$")
 date_format_re = re.compile(r"^\$\(date *(?:\+[\"\']([^\"\']+)[\"\'])?\)$")
