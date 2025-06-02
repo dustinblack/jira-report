@@ -1,0 +1,28 @@
+jira_report_jobs:
+
+  # - job_id: (str) A unique job identifier with no spaces
+  #   owner_email: (str) The email address of the owner of this job
+  #   description: (str) A free form description of the job
+  #   cron_schedule: (str) A properly-formatted cron schedule
+  #   jql: (str) A complete and valid JQL query
+  #   exclude_comment_authors: (list:str) Comments by authors that include this text will be skipped
+  #   update_grace_days: (int) Grace period in days for issue updates before highlighting them in red in the HTML report
+  #   email: (dict)
+  #     subject: (str) Email subject line
+  #     message: (str) Email message to insert above query results
+  #     recipients: (list:str) List of email addresses to receive report
+
+  - job_id: example-1
+    owner_email: foo@example.com
+    description: My team sprint open items report
+    cron_schedule: 00 08 * * 1-2
+    jql: project = MYPROJECT AND status not in (Closed) AND Sprint in openSprints()
+    exclude_comment_authors:
+      - bot
+    update_grace_days: 10
+    email:
+      subject: My team sprint open items report $(date +"%a %b %d")
+      message: Below is the report for $(date)
+      recipients:
+        - bar@example.com
+        - baz@example.com
