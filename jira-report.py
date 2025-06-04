@@ -25,6 +25,7 @@ Copyright 2021 Joe Talerico
 
 import sys
 import pprint
+from requests import post
 from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
@@ -131,6 +132,30 @@ parser.add_argument(
     help="Email password (make sure you use an app password!)",
 )
 parser.add_argument(
+    "-L",
+    "--llm-model-api",
+    type=str,
+    dest="llm_model_api",
+    required=False,
+    help="API endpoint for LLM model to use for AI summaries",
+)
+parser.add_argument(
+    "-I",
+    "--llm-model-id",
+    type=str,
+    dest="llm_model_id",
+    required=False,
+    help="ID of the LLM model to use for AI summaries",
+)
+parser.add_argument(
+    "-K",
+    "--llm-token",
+    type=str,
+    dest="llm_token",
+    required=False,
+    help="Authentication token for the LLM API",
+)
+parser.add_argument(
     "-x",
     "--exclude-comment-author",
     type=str,
@@ -196,6 +221,54 @@ def send_email(subject, body, sender, user, recipients, password):
     smtp_server.login(user, password)
     smtp_server.sendmail(sender, recipients, msg.as_string())
     smtp_server.quit()
+
+
+def llm_helper(
+    query: str,
+    model_api=args.llm_model_api,
+    model_id=args.llm_model_id,
+    token=args.llm_token,
+):
+    print("Following the white rabbit...")
+
+    message_header = (
+        "== AI SUMMARY ==\n"
+        "Warning: AI-generated summaries may contain inaccuracies. Users must verify "
+        "all information before use.\n\n"
+    )
+
+    message_footer = "== END AI SUMMARY ==\n\n"
+
+    url = f"{model_api.rstrip('/')}/v1/chat/completions"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    messages = [
+        {
+            "role": "user",
+            "content": query
+        }
+    ]
+
+    data = {"model": model_id, "messages": messages, "temperature": 0.7}
+
+    try:
+        response = post(url, headers=headers, json=data, timeout=30, verify=False)
+        response.raise_for_status()
+        response_data = response.json()
+
+        assistant_message = response_data["choices"][0]["message"]["content"]
+        messages.append({"role": "assistant", "content": assistant_message})
+
+        return message_header + assistant_message + "\n\n" + message_footer
+
+    except Exception as e:
+        print(f"\nError: {str(e)}")
+        if hasattr(e, "response") and hasattr(e.response, "text"):
+            print(f"Response: {e.response.text}")
 
 
 logger.info(f"Connecting to Jira server: {args.jira_server}")
@@ -336,55 +409,81 @@ else:
     logger.error("Query returned no results!")
     sys.exit(1)
 
-if args.recipients and not args.local:
-    html_report = [f"Issue count: {issue_count}<br><br>\n"]
+# Always generate the html report so that we can use it for the llm
+html_report = [f"Issue count: {issue_count}<br><br>\n"]
 
-    for item in report_list:
-        html_report.append("<hr>\n")
+for item in report_list:
+    html_report.append("<hr>\n")
 
-        for key, value in item.items():
-            if "Link" in key:
-                if "Epic" not in key:
-                    link = value
-                else:
-                    epic_link = value
+    for key, value in item.items():
+        if "Link" in key:
+            if "Epic" not in key:
+                link = value
+            else:
+                epic_link = value
 
-        for key, value in item.items():
-            if "Link" not in key:
-                if "Latest" not in key:
-                    if "Issue" in key:
+    for key, value in item.items():
+        if "Link" not in key:
+            if "Latest" not in key:
+                if "Issue" in key:
+                    html_report.append(
+                        f"<b>{key}</b>: <a href='{link}'>{value}</a><br>"
+                    )
+                elif "Epic" in key:
+                    if value:
                         html_report.append(
-                            f"<b>{key}</b>: <a href='{link}'>{value}</a><br>"
+                            f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
                         )
-                    elif "Epic" in key:
-                        if value:
-                            html_report.append(
-                                f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
-                            )
-                        else:
-                            html_report.append(
-                                f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
-                            )
-                    elif "Updated" in key:
-                        updated_datetime = datetime.strptime(
-                            value, "%a %d %b %Y, %I:%M%p"
-                        )
-                        delta = datetime.now() - updated_datetime
-                        if delta.days >= int(args.update_grace_days):
-                            html_report.append(
-                                f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
-                            )
-                        else:
-                            html_report.append(f"<b>{key}</b>: {value}<br>")
                     else:
-                        html_report.append(f"<b>{key}</b>: {value}<br>\n")
+                        html_report.append(
+                            f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
+                        )
+                elif "Updated" in key:
+                    updated_datetime = datetime.strptime(
+                        value, "%a %d %b %Y, %I:%M%p"
+                    )
+                    delta = datetime.now() - updated_datetime
+                    if delta.days >= int(args.update_grace_days):
+                        html_report.append(
+                            f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
+                        )
+                    else:
+                        html_report.append(f"<b>{key}</b>: {value}<br>")
                 else:
-                    html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
-        html_report.append("\n\n")
+                    html_report.append(f"<b>{key}</b>: {value}<br>\n")
+            else:
+                html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
+    html_report.append("\n\n")
 
-    html_message = " ".join(html_report)
+html_message = " ".join(html_report)
 
-    email_body = f"{args.email_message}<br><br>{html_message}"
+
+## LLM Playground
+llm_summary = ""
+if args.llm_model_api and args.llm_model_id and args.llm_token:
+    llm_summary = llm_helper(
+        query = (
+            "Use no more than three sentences to describe narratively in third person "
+            "what each owner is working on, highlighting any potential risks or "
+            "blockers. Any issues where the \"Updated\" date is "
+            "formatted with red text should be considered stale. "
+            "Note any stale issues in the beginning before the summary, "
+            "or otherwise note that there are no stale issues. At the end, in the "
+            "context of this content, offer suggestions to improve productivity or "
+            "efficiency. These suggestions should not be generic ideas that may seem "
+            "obvious. Use this content for the request: "
+            f"\n{html_message}"
+        ),
+        model_api=args.llm_model_api,
+        model_id=args.llm_model_id,
+        token=args.llm_token,
+    )
+
+if args.recipients and not args.local:
+    email_body = f"{args.email_message}<br><br>"
+    if llm_summary:
+        email_body += f"<pre>{llm_summary}</pre>"
+    email_body += html_message
     recipients_list = args.recipients.split(",")
 
     logger.info(f"Emailing recipients: {args.recipients}")
@@ -404,6 +503,7 @@ if args.recipients and not args.local:
     logger.info("Email sent")
 
 else:
+    print(f"{llm_summary}\n")
     report = [f"Issue count: {issue_count}\n\n"]
 
     for item in report_list:
