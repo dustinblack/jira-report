@@ -36,13 +36,14 @@ parser.add_argument(
     help=(
         "The absolute path to the YAML input file -- This is passed to the cron job, "
         "so a relative path will not work."
-    )
+    ),
 )
 
 args = parser.parse_args()
 
+
 def run_cmd(command_list, cmd_input=None):
-    #FIXME - Initialize cmd_out in case of OSError
+    # FIXME - Initialize cmd_out in case of OSError
     cmd_out = ""
     try:
         cmd_out = subprocess.run(
@@ -55,13 +56,14 @@ def run_cmd(command_list, cmd_input=None):
     except subprocess.CalledProcessError as err:
         print(f"{err.cmd[0]} failed with return code {err.returncode}:\n{err.output}")
         sys.exit(1)
-    #FIXME -- Listing or removing a crontab that doesn't exist results in "OSError: [Errno 9] Bad file descriptor"
+    # FIXME -- Listing or removing a crontab that doesn't exist results in "OSError: [Errno 9] Bad file descriptor"
     except OSError:
         pass
     return "completed", cmd_out
 
+
 try:
-    with open (args.input_path, "r") as stream:
+    with open(args.input_path, "r") as stream:
         jobs = yaml.safe_load(stream)
 except:
     print("Error reading input file!")
@@ -83,7 +85,7 @@ for var in (
     "email_server",
     "email_from",
     "email_user",
-    "email_token"
+    "email_token",
 ):
     try:
         new_crontab += f"{var}={os.environ[var]}\n"

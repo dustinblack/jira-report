@@ -34,7 +34,6 @@ from jira import JIRA, JIRAError
 from logger import logger
 
 
-
 parser = ArgumentParser(
     description="Status report generator from Jira query",
     formatter_class=ArgumentDefaultsHelpFormatter,
@@ -162,9 +161,7 @@ parser.add_argument(
     dest="author_filter",
     required=False,
     default="bot",
-    help=(
-        "Comments by authors that include this text will be skipped"
-    ),
+    help=("Comments by authors that include this text will be skipped"),
 )
 parser.add_argument(
     "-g",
@@ -246,12 +243,7 @@ def llm_helper(
         "Authorization": f"Bearer {token}",
     }
 
-    messages = [
-        {
-            "role": "user",
-            "content": query
-        }
-    ]
+    messages = [{"role": "user", "content": query}]
 
     data = {"model": model_id, "messages": messages, "temperature": 0.7}
 
@@ -439,9 +431,7 @@ for item in report_list:
                             f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
                         )
                 elif "Updated" in key:
-                    updated_datetime = datetime.strptime(
-                        value, "%a %d %b %Y, %I:%M%p"
-                    )
+                    updated_datetime = datetime.strptime(value, "%a %d %b %Y, %I:%M%p")
                     delta = datetime.now() - updated_datetime
                     if delta.days >= int(args.update_grace_days):
                         html_report.append(
@@ -462,10 +452,10 @@ html_message = " ".join(html_report)
 llm_summary = ""
 if args.llm_model_api and args.llm_model_id and args.llm_token:
     llm_summary = llm_helper(
-        query = (
+        query=(
             "Use no more than three sentences to describe narratively in third person "
             "what each owner is working on, highlighting any potential risks or "
-            "blockers. Any issues where the \"Updated\" date is "
+            'blockers. Any issues where the "Updated" date is '
             "formatted with red text should be considered stale. "
             "Note any stale issues in the beginning before the summary, "
             "or otherwise note that there are no stale issues. At the end, in the "

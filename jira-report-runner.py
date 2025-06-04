@@ -32,7 +32,7 @@ for var in (
     "email_server",
     "email_from",
     "email_user",
-    "email_token"
+    "email_token",
 ):
     try:
         env_vars[var] = os.environ[var]
@@ -116,7 +116,7 @@ parser.add_argument(
     type=str,
     dest="job_id",
     required=True,
-    help="The job ID from the YAML input to run"
+    help="The job ID from the YAML input to run",
 )
 parser.add_argument(
     "-i",
@@ -124,13 +124,13 @@ parser.add_argument(
     type=str,
     dest="input_path",
     required=True,
-    help="The path to the YAML input file"
+    help="The path to the YAML input file",
 )
 
 args = parser.parse_args()
 
 try:
-    with open (args.input_path, "r") as stream:
+    with open(args.input_path, "r") as stream:
         jobs = yaml.safe_load(stream)
 except:
     print("Error reading input file!")
@@ -142,29 +142,29 @@ for job in jobs["jira_report_jobs"]:
         break
 
 cmd = [
-        "jira-report.py",
-        "-S",
-        args.jira_server,
-        "-T",
-        args.jira_token,
-        "-e",
-        args.email_server,
-        # "-p",
-        # args.smtp_port,
-        "-u",
-        args.email_user,
-        "-w",
-        args.email_password,
-        "-r",
-        ",".join(myjob["email"]["recipients"]),
-        "-J",
-        myjob['jql'],
-        #TODO make optional
-        "-x",
-        ",".join(myjob["exclude_comment_authors"]),
-        "-g",
-        str(myjob["update_grace_days"]),
-    ]
+    "jira-report.py",
+    "-S",
+    args.jira_server,
+    "-T",
+    args.jira_token,
+    "-e",
+    args.email_server,
+    # "-p",
+    # args.smtp_port,
+    "-u",
+    args.email_user,
+    "-w",
+    args.email_password,
+    "-r",
+    ",".join(myjob["email"]["recipients"]),
+    "-J",
+    myjob["jql"],
+    # TODO make optional
+    "-x",
+    ",".join(myjob["exclude_comment_authors"]),
+    "-g",
+    str(myjob["update_grace_days"]),
+]
 
 # Get and format any date parematers from the subject and message body
 date_param_re = re.compile(r"^(.*)(\$\(date *(?:\+[\"\'][^\"\']+[\"\'])?\))(.*)$")
@@ -177,24 +177,28 @@ for opt in (["-s", "subject"], ["-m", "message"]):
         for group in param_re_match.groups():
             fomat_re_match = date_format_re.match(str(group))
             if fomat_re_match:
-                    if fomat_re_match.groups()[0]:
-                        msg_str += now.strftime(str(fomat_re_match.groups()[0]))
-                    else:
-                        msg_str += now.strftime("%a %b %e %r %Z %Y")
+                if fomat_re_match.groups()[0]:
+                    msg_str += now.strftime(str(fomat_re_match.groups()[0]))
+                else:
+                    msg_str += now.strftime("%a %b %e %r %Z %Y")
             else:
                 msg_str += str(group)
     else:
         msg_str = str(myjob["email"][opt[1]])
-    cmd.extend([
-        opt[0],
-        msg_str,
-    ])
+    cmd.extend(
+        [
+            opt[0],
+            msg_str,
+        ]
+    )
 
 if args.email_from:
-    cmd.extend([
-        "-f",
-        args.email_from,
-    ])
+    cmd.extend(
+        [
+            "-f",
+            args.email_from,
+        ]
+    )
 
 print(f"\n{' '.join(cmd)}")
 
@@ -206,7 +210,5 @@ try:
     )
     print(f"Job completed:\n{cmd_out}")
 except subprocess.CalledProcessError as err:
-    print(
-        f"{err.cmd[0]} failed with return code {err.returncode}:\n{err.output}"
-    )
+    print(f"{err.cmd[0]} failed with return code {err.returncode}:\n{err.output}")
     sys.exit(1)
