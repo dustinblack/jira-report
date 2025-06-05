@@ -108,6 +108,30 @@ parser.add_argument(
     default=env_vars["email_token"],
     help="Email password (make sure you use an app password!)",
 )
+parser.add_argument(
+    "-L",
+    "--llm-model-api",
+    type=str,
+    dest="llm_model_api",
+    required=False,
+    help="API endpoint for LLM model to use for AI summaries",
+)
+parser.add_argument(
+    "-I",
+    "--llm-model-id",
+    type=str,
+    dest="llm_model_id",
+    required=False,
+    help="ID of the LLM model to use for AI summaries",
+)
+parser.add_argument(
+    "-K",
+    "--llm-token",
+    type=str,
+    dest="llm_token",
+    required=False,
+    help="Authentication token for the LLM API",
+)
 
 # Runner arguments
 parser.add_argument(
@@ -165,6 +189,18 @@ cmd = [
     "-g",
     str(myjob["update_grace_days"]),
 ]
+
+if myjob["enable_ai_summary"]:
+    cmd.extend(
+        [ 
+            "-L",
+            args.llm_model_api,
+            "-I",
+            args.llm_model_id,
+            "-K",
+            args.llm_token,
+        ]
+    )
 
 # Get and format any date parematers from the subject and message body
 date_param_re = re.compile(r"^(.*)(\$\(date *(?:\+[\"\'][^\"\']+[\"\'])?\))(.*)$")

@@ -86,6 +86,9 @@ for var in (
     "email_from",
     "email_user",
     "email_token",
+    "llm_model_api",
+    "llm_model_id",
+    "llm_token",
 ):
     try:
         new_crontab += f"{var}={os.environ[var]}\n"
