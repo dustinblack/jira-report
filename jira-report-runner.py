@@ -33,6 +33,9 @@ for var in (
     "email_from",
     "email_user",
     "email_token",
+    "llm_model_api",
+    "llm_model_id",
+    "llm_token",
 ):
     try:
         env_vars[var] = os.environ[var]
@@ -114,6 +117,7 @@ parser.add_argument(
     type=str,
     dest="llm_model_api",
     required=False,
+    default=env_vars["llm_model_api"],
     help="API endpoint for LLM model to use for AI summaries",
 )
 parser.add_argument(
@@ -122,6 +126,7 @@ parser.add_argument(
     type=str,
     dest="llm_model_id",
     required=False,
+    default=env_vars["llm_model_id"],
     help="ID of the LLM model to use for AI summaries",
 )
 parser.add_argument(
@@ -130,6 +135,7 @@ parser.add_argument(
     type=str,
     dest="llm_token",
     required=False,
+    default=env_vars["llm_token"],
     help="Authentication token for the LLM API",
 )
 
