@@ -464,15 +464,18 @@ if args.llm_model_api and args.llm_model_id and args.llm_token:
     llm_summary = llm_helper(
         query = (
             "Use no more than three sentences per owner to describe narratively "
-            "in third person what each owner is working on, highlighting any potential risks or "
-            "blockers. Do not use gendered pronouns when referring to a person. "
-            "Any issues where the \"Updated\" date is "
-            "formatted with red text should be considered stale. "
-            "Note any stale issues in the beginning before the summary, "
-            "or otherwise note that there are no stale issues. At the end, in the "
-            "context of this content, offer suggestions to improve productivity or "
-            "efficiency. These suggestions should not be generic ideas that may seem "
-            "obvious. Use this content for the request: "
+            "in third person what each owner is working on, highlighting any potential "
+            "risks or blockers. "
+            "Do not use gendered pronouns when referring to a person. "
+            "Any issue text from the provided content that is formatted with the HTML "
+            "<span style='color:red'> tag indicates something that needs priority "
+            "attention. Note any of these priorities in the beginning before the "
+            "summary and why they need attention. "
+            "After the summary, note all issues that have been recently closed along "
+            "with their outcomes."
+            "At the end, in the context of this content, offer suggestions to improve "
+            "productivity or efficiency. These suggestions should not be generic ideas "
+            "that may seem obvious. Use this HTML content for the request: "
             f"\n{html_message}"
         ),
         model_api=args.llm_model_api,

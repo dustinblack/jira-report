@@ -196,9 +196,9 @@ cmd = [
     str(myjob["update_grace_days"]),
 ]
 
-if myjob["enable_ai_summary"]:
+if "enable_ai_summary" in myjob.keys() and myjob["enable_ai_summary"]:
     cmd.extend(
-        [ 
+        [
             "-L",
             args.llm_model_api,
             "-I",
