@@ -327,7 +327,12 @@ if issues[0]["total"] > 0:
             else:
                 owner = result["fields"]["assignee"]["displayName"]
 
+            all_comments = []
             if len(result["fields"]["comment"]["comments"]) > 0:
+                for comment in result["fields"]["comment"]["comments"]:
+                    if args.author_filter in comment["author"]["name"]:
+                        continue
+                    all_comments.append(comment["body"])
                 comment_number = -1
                 try:
                     while (
@@ -402,6 +407,7 @@ if issues[0]["total"] > 0:
                 updated_time, "%a %d %b %Y, %I:%M%p"
             )
             result_dict["Latest Update"] = latest_comment
+            result_dict["All Comments"] = "\n".join(all_comments)
 
             report_list.append(result_dict)
 
@@ -423,6 +429,8 @@ for item in report_list:
                 epic_link = value
 
     for key, value in item.items():
+        if "All Comments" in key:
+            continue
         if "Link" not in key:
             if "Latest" not in key:
                 if "Issue" in key:
@@ -461,22 +469,46 @@ html_message = " ".join(html_report)
 ## LLM Playground
 llm_summary = ""
 if args.llm_model_api and args.llm_model_id and args.llm_token:
+
+    llm_report = [f"Issue count: {issue_count}\n\n"]
+
+    for item in report_list:
+        llm_report.append("==========\n")
+        for key, value in item.items():
+            if "Link" not in key:
+                llm_report.append(f"{key}: {value}\n")
+            elif "Epic" in key and item["Epic"] and "subtask" not in item["Epic"]:
+                llm_report.append(f"({value})\n")
+            elif "Epic" not in key:
+                llm_report.append(f"({value})\n")
+        llm_report.append("\n\n")
+
+    llm_report_message = " ".join(llm_report)
+
     llm_summary = llm_helper(
         query = (
-            "Use no more than three sentences per owner to describe narratively "
-            "in third person what each owner is working on, highlighting any potential "
-            "risks or blockers. "
-            "Do not use gendered pronouns when referring to a person. "
-            "Any issue text from the provided content that is formatted with the HTML "
-            "<span style='color:red'> tag indicates something that needs priority "
-            "attention. Note any of these priorities in the beginning before the "
-            "summary and why they need attention. "
-            "After the summary, note all issues that have been recently closed along "
-            "with their outcomes."
-            "At the end, in the context of this content, offer suggestions to improve "
-            "productivity or efficiency. These suggestions should not be generic ideas "
-            "that may seem obvious. Use this HTML content for the request: "
-            f"\n{html_message}"
+            "In your response, do not use gendered pronouns when referring to a "
+            "person. "
+
+            "Any URLs in your output should be formatted as hyperlinks with HTML. "
+
+            "In a section titled 'Priority Attention Needed', note each issue that "
+            "does not have an assigned Epic or that has an Updated date older than "
+            f"{args.update_grace_days} and note why each issue needs attention. "
+
+            "In another section titled 'Current Work', use no more than three "
+            "sentences per owner to describe narratively in third person what each "
+            "owner is working on, highlighting any potential risks or blockers. "
+
+            "In a third section titled 'Recently Closed Issues', note each issue that "
+            f"has been closed in the last {args.update_grace_days}, based on "
+            "the issue's 'Status' field, along with the outcomes of the work. "
+
+            "In a final section titled 'Productivity and Efficiency Suggestions', in "
+            "the context of this content, offer suggestions to improve productivity or "
+            "efficiency. These suggestions should not be generic ideas that may be "
+            "considered obvious. Use this content for the request: "
+            f"\n{llm_report_message}"
         ),
         model_api=args.llm_model_api,
         model_id=args.llm_model_id,
@@ -513,6 +545,8 @@ else:
     for item in report_list:
         report.append("==========\n")
         for key, value in item.items():
+            if "All Comments" in key:
+                continue
             if "Link" not in key:
                 report.append(f"{key}: {value}\n")
             elif "Epic" in key and item["Epic"] and "subtask" not in item["Epic"]:
