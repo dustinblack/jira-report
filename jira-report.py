@@ -25,6 +25,7 @@ Copyright 2021 Joe Talerico
 
 import sys
 import pprint
+from time import sleep
 from requests import post
 from datetime import datetime
 from smtplib import SMTP_SSL
@@ -228,17 +229,21 @@ def llm_helper(
     model_api=args.llm_model_api,
     model_id=args.llm_model_id,
     token=args.llm_token,
+    header_footer=True,
 ):
     print("Following the white rabbit...")
 
-    message_header = (
-        "== AI SUMMARY ==\n"
-        f"Model used: {model_id}\n"
-        "Warning: AI-generated summaries may contain inaccuracies. Users must verify "
-        "all information before use.\n\n"
-    )
+    message_header = ""
+    message_footer = ""
+    if header_footer:
+        message_header = (
+            "== AI SUMMARY ==\n"
+            f"Model used: {model_id}\n"
+            "Warning: AI-generated summaries may contain inaccuracies. Users must verify "
+            "all information before use.\n\n"
+        )
 
-    message_footer = "== END AI SUMMARY ==\n\n"
+        message_footer = "\n\n== END AI SUMMARY ==\n\n"
 
     url = f"{model_api.rstrip('/')}/v1/chat/completions"
 
@@ -256,20 +261,28 @@ def llm_helper(
 
     data = {"model": model_id, "messages": messages, "temperature": 0.7}
 
-    try:
-        response = post(url, headers=headers, json=data, timeout=30, verify=False)
-        response.raise_for_status()
-        response_data = response.json()
+    retries = 3
+    for attempt in range(1, retries + 2):  # 1 to retries+1 inclusive
+        try:
+            response = post(url, headers=headers, json=data, timeout=30, verify=False)
+            response.raise_for_status()
+            response_data = response.json()
 
-        assistant_message = response_data["choices"][0]["message"]["content"]
-        messages.append({"role": "assistant", "content": assistant_message})
+            assistant_message = response_data["choices"][0]["message"]["content"]
+            return message_header + assistant_message + message_footer
 
-        return message_header + assistant_message + "\n\n" + message_footer
-
-    except Exception as e:
-        print(f"\nError: {str(e)}")
-        if hasattr(e, "response") and hasattr(e.response, "text"):
-            print(f"Response: {e.response.text}")
+        except Exception as e:
+            if attempt > retries:
+                print(f"\nError: {str(e)}")
+                if hasattr(e, "response") and hasattr(e.response, "text"):
+                    print(f"Response: {e.response.text}")
+                return (
+                    message_header
+                    + "AI summary unavailable due to API error.\n"
+                    + message_footer
+                )
+            print(f"Request failed (attempt {attempt} of {retries + 1}), retrying in 2 seconds...")
+            sleep(2)
 
 
 logger.info(f"Connecting to Jira server: {args.jira_server}")
@@ -407,8 +420,17 @@ if issues[0]["total"] > 0:
             result_dict["Updated"] = datetime.strftime(
                 updated_time, "%a %d %b %Y, %I:%M%p"
             )
-            result_dict["Latest Update"] = latest_comment
             result_dict["All Comments"] = "\n".join(all_comments)
+            if args.llm_model_api and args.llm_model_id and args.llm_token:
+                result_dict["AI TL;DR"] = llm_helper(
+                    query = (
+                        "Summarize the below in one sentence. If there isn't enough "
+                        "content to summarize, just say 'No summary available'. Here "
+                        f"is the content:\n{result_dict['All Comments']}"
+                    ),
+                    header_footer = False,
+                )
+            result_dict["Latest Update"] = latest_comment
 
             report_list.append(result_dict)
 
