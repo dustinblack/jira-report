@@ -233,6 +233,7 @@ def llm_helper(
 
     message_header = (
         "== AI SUMMARY ==\n"
+        f"Model used: {model_id}\n"
         "Warning: AI-generated summaries may contain inaccuracies. Users must verify "
         "all information before use.\n\n"
     )
