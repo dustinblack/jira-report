@@ -281,8 +281,12 @@ def llm_helper(
                     + "AI summary unavailable due to API error.\n"
                     + message_footer
                 )
-            print(f"Request failed (attempt {attempt} of {retries + 1}), retrying in 2 seconds...")
-            sleep(2)
+            wait_time = 3 * attempt  # Exponential backoff: 3s, 6s, 9s, ...
+            print(
+                f"Request failed (attempt {attempt} of {retries + 1}), "
+                f"retrying in {wait_time} seconds..."
+            )
+            sleep(wait_time)
 
 
 logger.info(f"Connecting to Jira server: {args.jira_server}")
@@ -510,28 +514,32 @@ if args.llm_model_api and args.llm_model_id and args.llm_token:
 
     llm_summary = llm_helper(
         query = (
+            "In a section titled 'Priority Attention Needed', note each issue that "
+            "does not have an assigned Epic or that has an Updated date older than "
+            f"{args.update_grace_days} and note why each issue needs attention. "
+
+            "In another section titled 'Current Work', group the work by owner, making "
+            "sure to include a section for every owner, and use no more than three "
+            "sentences per owner to describe narratively in third person what each "
+            "owner is working on, highlighting any potential risks or blockers. Do not "
+            "use bullet points or lists in this section. "
+
+            "In a third section titled 'Recently Closed Issues', note each issue that "
+            "has its 'Status' field set to 'Closed' and its 'Updated' date no more "
+            f"than {args.update_grace_days} days ago, along with the outcomes of the "
+            "work. "
+
+            "In a final section titled 'Productivity and Efficiency Suggestions', in "
+            "the context of this content, offer up to three suggestions to improve "
+            "productivity or efficiency. These suggestions should not be generic ideas "
+            "that may be considered obvious. "
+
             "In your response, do not use gendered pronouns when referring to a "
             "person. "
 
             "Any URLs in your output should be formatted as hyperlinks with HTML. "
 
-            "In a section titled 'Priority Attention Needed', note each issue that "
-            "does not have an assigned Epic or that has an Updated date older than "
-            f"{args.update_grace_days} and note why each issue needs attention. "
-
-            "In another section titled 'Current Work', use no more than three "
-            "sentences per owner to describe narratively in third person what each "
-            "owner is working on, highlighting any potential risks or blockers. "
-
-            "In a third section titled 'Recently Closed Issues', note each issue that "
-            f"has been closed in the last {args.update_grace_days}, based on "
-            "the issue's 'Status' field, along with the outcomes of the work. "
-
-            "In a final section titled 'Productivity and Efficiency Suggestions', in "
-            "the context of this content, offer suggestions to improve productivity or "
-            "efficiency. These suggestions should not be generic ideas that may be "
-            "considered obvious. Use this content for the request: "
-            f"\n{llm_report_message}"
+            f"Use this content for the request:\n{llm_report_message}"
         ),
         model_api=args.llm_model_api,
         model_id=args.llm_model_id,
