@@ -25,6 +25,8 @@ Copyright 2021 Joe Talerico
 
 import sys
 import pprint
+from time import sleep
+from requests import post
 from datetime import datetime
 from smtplib import SMTP_SSL
 from email.mime.text import MIMEText
@@ -131,6 +133,30 @@ parser.add_argument(
     help="Email password (make sure you use an app password!)",
 )
 parser.add_argument(
+    "-L",
+    "--llm-model-api",
+    type=str,
+    dest="llm_model_api",
+    required=False,
+    help="API endpoint for LLM model to use for AI summaries",
+)
+parser.add_argument(
+    "-I",
+    "--llm-model-id",
+    type=str,
+    dest="llm_model_id",
+    required=False,
+    help="ID of the LLM model to use for AI summaries",
+)
+parser.add_argument(
+    "-K",
+    "--llm-token",
+    type=str,
+    dest="llm_token",
+    required=False,
+    help="Authentication token for the LLM API",
+)
+parser.add_argument(
     "-x",
     "--exclude-comment-author",
     type=str,
@@ -198,6 +224,71 @@ def send_email(subject, body, sender, user, recipients, password):
     smtp_server.quit()
 
 
+def llm_helper(
+    query: str,
+    model_api=args.llm_model_api,
+    model_id=args.llm_model_id,
+    token=args.llm_token,
+    header_footer=True,
+):
+    print("Following the white rabbit...")
+
+    message_header = ""
+    message_footer = ""
+    if header_footer:
+        message_header = (
+            "== AI SUMMARY ==\n"
+            f"Model used: {model_id}\n"
+            "Warning: AI-generated summaries may contain inaccuracies. Users must verify "
+            "all information before use.\n\n"
+        )
+
+        message_footer = "\n\n== END AI SUMMARY ==\n\n"
+
+    url = f"{model_api.rstrip('/')}/v1/chat/completions"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    messages = [
+        {
+            "role": "user",
+            "content": query
+        }
+    ]
+
+    data = {"model": model_id, "messages": messages, "temperature": 0.7}
+
+    retries = 3
+    for attempt in range(1, retries + 2):  # 1 to retries+1 inclusive
+        try:
+            response = post(url, headers=headers, json=data, timeout=30, verify=False)
+            response.raise_for_status()
+            response_data = response.json()
+
+            assistant_message = response_data["choices"][0]["message"]["content"]
+            return message_header + assistant_message + message_footer
+
+        except Exception as e:
+            if attempt > retries:
+                print(f"\nError: {str(e)}")
+                if hasattr(e, "response") and hasattr(e.response, "text"):
+                    print(f"Response: {e.response.text}")
+                return (
+                    message_header
+                    + "AI summary unavailable due to API error.\n"
+                    + message_footer
+                )
+            wait_time = 3 * attempt  # Exponential backoff: 3s, 6s, 9s, ...
+            print(
+                f"Request failed (attempt {attempt} of {retries + 1}), "
+                f"retrying in {wait_time} seconds..."
+            )
+            sleep(wait_time)
+
+
 logger.info(f"Connecting to Jira server: {args.jira_server}")
 
 jira_conn = JIRA(server=args.jira_server, token_auth=(args.jira_token))
@@ -254,7 +345,12 @@ if issues[0]["total"] > 0:
             else:
                 owner = result["fields"]["assignee"]["displayName"]
 
+            all_comments = []
             if len(result["fields"]["comment"]["comments"]) > 0:
+                for comment in result["fields"]["comment"]["comments"]:
+                    if args.author_filter in comment["author"]["name"]:
+                        continue
+                    all_comments.append(comment["body"])
                 comment_number = -1
                 try:
                     while (
@@ -328,6 +424,16 @@ if issues[0]["total"] > 0:
             result_dict["Updated"] = datetime.strftime(
                 updated_time, "%a %d %b %Y, %I:%M%p"
             )
+            result_dict["All Comments"] = "\n".join(all_comments)
+            if args.llm_model_api and args.llm_model_id and args.llm_token:
+                result_dict["AI TL;DR"] = llm_helper(
+                    query = (
+                        "Summarize the below in one sentence. If there isn't enough "
+                        "content to summarize, just say 'No summary available'. Here "
+                        f"is the content:\n{result_dict['All Comments']}"
+                    ),
+                    header_footer = False,
+                )
             result_dict["Latest Update"] = latest_comment
 
             report_list.append(result_dict)
@@ -336,55 +442,115 @@ else:
     logger.error("Query returned no results!")
     sys.exit(1)
 
-if args.recipients and not args.local:
-    html_report = [f"Issue count: {issue_count}<br><br>\n"]
+# Always generate the html report so that we can use it for the llm
+html_report = [f"Issue count: {issue_count}<br><br>\n"]
+
+for item in report_list:
+    html_report.append("<hr>\n")
+
+    for key, value in item.items():
+        if "Link" in key:
+            if "Epic" not in key:
+                link = value
+            else:
+                epic_link = value
+
+    for key, value in item.items():
+        if "All Comments" in key:
+            continue
+        if "Link" not in key:
+            if "Latest" not in key:
+                if "Issue" in key:
+                    html_report.append(
+                        f"<b>{key}</b>: <a href='{link}'>{value}</a><br>"
+                    )
+                elif "Epic" in key:
+                    if value:
+                        html_report.append(
+                            f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
+                        )
+                    else:
+                        html_report.append(
+                            f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
+                        )
+                elif "Updated" in key:
+                    updated_datetime = datetime.strptime(
+                        value, "%a %d %b %Y, %I:%M%p"
+                    )
+                    delta = datetime.now() - updated_datetime
+                    if delta.days >= int(args.update_grace_days):
+                        html_report.append(
+                            f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
+                        )
+                    else:
+                        html_report.append(f"<b>{key}</b>: {value}<br>")
+                else:
+                    html_report.append(f"<b>{key}</b>: {value}<br>\n")
+            else:
+                html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
+    html_report.append("\n\n")
+
+html_message = " ".join(html_report)
+
+
+## LLM Playground
+llm_summary = ""
+if args.llm_model_api and args.llm_model_id and args.llm_token:
+
+    llm_report = [f"Issue count: {issue_count}\n\n"]
 
     for item in report_list:
-        html_report.append("<hr>\n")
-
-        for key, value in item.items():
-            if "Link" in key:
-                if "Epic" not in key:
-                    link = value
-                else:
-                    epic_link = value
-
+        llm_report.append("==========\n")
         for key, value in item.items():
             if "Link" not in key:
-                if "Latest" not in key:
-                    if "Issue" in key:
-                        html_report.append(
-                            f"<b>{key}</b>: <a href='{link}'>{value}</a><br>"
-                        )
-                    elif "Epic" in key:
-                        if value:
-                            html_report.append(
-                                f"<b>{key}</b>: <a href='{epic_link}'>{value}</a><br>"
-                            )
-                        else:
-                            html_report.append(
-                                f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
-                            )
-                    elif "Updated" in key:
-                        updated_datetime = datetime.strptime(
-                            value, "%a %d %b %Y, %I:%M%p"
-                        )
-                        delta = datetime.now() - updated_datetime
-                        if delta.days >= int(args.update_grace_days):
-                            html_report.append(
-                                f"<b>{key}</b>: <span style='color:red'>{value}</span><br>"
-                            )
-                        else:
-                            html_report.append(f"<b>{key}</b>: {value}<br>")
-                    else:
-                        html_report.append(f"<b>{key}</b>: {value}<br>\n")
-                else:
-                    html_report.append(f"<b>{key}</b>: <pre>{value}</pre><br>\n")
-        html_report.append("\n\n")
+                llm_report.append(f"{key}: {value}\n")
+            elif "Epic" in key and item["Epic"] and "subtask" not in item["Epic"]:
+                llm_report.append(f"({value})\n")
+            elif "Epic" not in key:
+                llm_report.append(f"({value})\n")
+        llm_report.append("\n\n")
 
-    html_message = " ".join(html_report)
+    llm_report_message = " ".join(llm_report)
 
-    email_body = f"{args.email_message}<br><br>{html_message}"
+    llm_summary = llm_helper(
+        query = (
+            "In a section titled 'Priority Attention Needed', note each issue that "
+            "does not have an assigned Epic or that has an Updated date older than "
+            f"{args.update_grace_days} and note why each issue needs attention. "
+
+            "In another section titled 'Current Work', group the work by owner, making "
+            "sure to include a section for every owner, and use no more than three "
+            "sentences per owner to describe narratively in third person what each "
+            "owner is working on, highlighting any potential risks or blockers. Do not "
+            "use bullet points or lists in this section. "
+
+            "In a third section titled 'Recently Closed Issues', note each issue that "
+            "has its 'Status' field set to 'Closed' and its 'Updated' date no more "
+            f"than {args.update_grace_days} days ago, along with the outcomes of the "
+            "work. "
+
+            "In a final section titled 'Productivity and Efficiency Suggestions', in "
+            "the context of this content, offer up to three suggestions to improve "
+            "productivity or efficiency. These suggestions should not be generic ideas "
+            "that may be considered obvious. "
+
+            "In your response, do not use gendered pronouns when referring to a "
+            "person. "
+
+            "Any URLs in your output should be formatted as hyperlinks with HTML. "
+
+            f"Use this content for the request:\n{llm_report_message}"
+        ),
+        model_api=args.llm_model_api,
+        model_id=args.llm_model_id,
+        token=args.llm_token,
+    )
+
+if args.recipients and not args.local:
+    email_body = f"{args.email_message}<br><br>"
+    if llm_summary:
+        email_body += f"<pre>{llm_summary}</pre>"
+    email_body += html_message
     recipients_list = args.recipients.split(",")
 
     logger.info(f"Emailing recipients: {args.recipients}")
@@ -404,11 +570,14 @@ if args.recipients and not args.local:
     logger.info("Email sent")
 
 else:
+    print(f"{llm_summary}\n")
     report = [f"Issue count: {issue_count}\n\n"]
 
     for item in report_list:
         report.append("==========\n")
         for key, value in item.items():
+            if "All Comments" in key:
+                continue
             if "Link" not in key:
                 report.append(f"{key}: {value}\n")
             elif "Epic" in key and item["Epic"] and "subtask" not in item["Epic"]:
