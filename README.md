@@ -40,7 +40,7 @@ Issue count: 32
 ## Command syntax
 ```
 $ ./jira-report.py -h
-usage: jira-report.py [-h] --server JIRA_SERVER --token JIRA_TOKEN --jql JQL [--recipients RECIPIENTS] [--email-server EMAIL_SERVER] [--smtp-port SMTP_PORT] [--email-from EMAIL_FROM] [--email-user EMAIL_USER]
+usage: jira-report.py [-h] --server JIRA_SERVER --email JIRA_EMAIL --token JIRA_TOKEN --jql JQL [--recipients RECIPIENTS] [--email-server EMAIL_SERVER] [--smtp-port SMTP_PORT] [--email-from EMAIL_FROM] [--email-user EMAIL_USER]
                       [--email-subject EMAIL_SUBJECT] [--email-message EMAIL_MESSAGE] [--email-password EMAIL_PASSWORD] [--local]
 
 Status report generator from Jira query
@@ -48,9 +48,11 @@ Status report generator from Jira query
 optional arguments:
   -h, --help            show this help message and exit
   --server JIRA_SERVER, -S JIRA_SERVER
-                        Jira server URL
+                        Jira Cloud server URL (e.g. https://your-domain.atlassian.net)
+  --email JIRA_EMAIL, -E JIRA_EMAIL
+                        Jira account email address for Cloud basic auth
   --token JIRA_TOKEN, -T JIRA_TOKEN
-                        Jira authentication token
+                        Jira Cloud API token (create at https://id.atlassian.com)
   --jql JQL, -J JQL     JQL query for Jira search
   --recipients RECIPIENTS, -r RECIPIENTS
                         Comma-separated list of email addresses to receive report
@@ -72,7 +74,8 @@ optional arguments:
 ```
 
 ***Treat these items with care as they provide access to your accounts with your credentials***
-- **`JIRA_TOKEN`** - In your Jira profile, create a *Personal Access Token*. This is the token used by the script.
+- **`JIRA_EMAIL`** - The email address associated with your Jira Cloud account, used for basic auth.
+- **`JIRA_TOKEN`** - Create a Jira Cloud API token at https://id.atlassian.com. This is the token used by the script.
 - **`EMAIL_PASSWORD`** - Assuming Gmail, you will need to create an *App Password* for your Google account and use that here.
 
 ## GitHub Actions Automated Reports

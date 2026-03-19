@@ -18,6 +18,7 @@ jobs:
         env:
           JIRA_SERVER: ${{ secrets.REDHAT_PERFBOT_JIRA_SERVER }}
           JIRA_TOKEN: ${{ secrets.REDHAT_PERFBOT_JIRA_TOKEN }}
+          JIRA_EMAIL: ${{ secrets.REDHAT_PERFBOT_JIRA_EMAIL }}
           TELCO_JQL: ${{ secrets.REDHAT_PERFBOT_TELCO_JQL }}
           EMAIL_USER: ${{ secrets.REDHAT_PERFBOT_EMAIL_USER }}
           EMAIL_TOKEN: ${{ secrets.REDHAT_PERFBOT_EMAIL_TOKEN }}
@@ -25,7 +26,7 @@ jobs:
           TELCO_SUBJECT: ${{ secrets.REDHAT_PERFBOT_TELCO_SUBJECT }}
           TELCO_MESSAGE: ${{ secrets.REDHAT_PERFBOT_TELCO_MESSAGE }}
         run: |
-          ./jira-report.py --server $JIRA_SERVER --token $JIRA_TOKEN \
+          ./jira-report.py --server $JIRA_SERVER --email $JIRA_EMAIL --token $JIRA_TOKEN \
           --jql "$TELCO_JQL" --recipients "$TELCO_RECIPIENTS" \
           --email-from perfscale-automation@redhat.com \
           --email-user $EMAIL_USER --email-server "smtp.gmail.com" \
@@ -36,6 +37,7 @@ jobs:
         env:
           JIRA_SERVER: ${{ secrets.REDHAT_PERFBOT_JIRA_SERVER }}
           JIRA_TOKEN: ${{ secrets.REDHAT_PERFBOT_JIRA_TOKEN }}
+          JIRA_EMAIL: ${{ secrets.REDHAT_PERFBOT_JIRA_EMAIL }}
           PANDA_JQL: ${{ secrets.REDHAT_PERFBOT_PANDA_JQL }}
           EMAIL_USER: ${{ secrets.REDHAT_PERFBOT_EMAIL_USER }}
           EMAIL_TOKEN: ${{ secrets.REDHAT_PERFBOT_EMAIL_TOKEN }}
@@ -43,7 +45,7 @@ jobs:
           PANDA_SUBJECT: ${{ secrets.REDHAT_PERFBOT_PANDA_SUBJECT }}
           PANDA_MESSAGE: ${{ secrets.REDHAT_PERFBOT_PANDA_MESSAGE }}
         run: |
-          ./jira-report.py --server $JIRA_SERVER --token $JIRA_TOKEN \
+          ./jira-report.py --server $JIRA_SERVER --email $JIRA_EMAIL --token $JIRA_TOKEN \
           --jql "$PANDA_JQL" --recipients "$PANDA_RECIPIENTS" \
           --email-from perfscale-automation@redhat.com \
           --email-user $EMAIL_USER --email-server "smtp.gmail.com" \
@@ -54,6 +56,7 @@ jobs:
         env:
           JIRA_SERVER: ${{ secrets.REDHAT_PERFBOT_JIRA_SERVER }}
           JIRA_TOKEN: ${{ secrets.REDHAT_PERFBOT_JIRA_TOKEN }}
+          JIRA_EMAIL: ${{ secrets.REDHAT_PERFBOT_JIRA_EMAIL }}
           AUTO_JQL: ${{ secrets.REDHAT_PERFBOT_AUTO_JQL }}
           EMAIL_USER: ${{ secrets.REDHAT_PERFBOT_EMAIL_USER }}
           EMAIL_TOKEN: ${{ secrets.REDHAT_PERFBOT_EMAIL_TOKEN }}
@@ -61,7 +64,7 @@ jobs:
           AUTO_SUBJECT: ${{ secrets.REDHAT_PERFBOT_AUTO_SUBJECT }}
           AUTO_MESSAGE: ${{ secrets.REDHAT_PERFBOT_AUTO_MESSAGE }}
         run: |
-          ./jira-report.py --server $JIRA_SERVER --token $JIRA_TOKEN \
+          ./jira-report.py --server $JIRA_SERVER --email $JIRA_EMAIL --token $JIRA_TOKEN \
           --jql "$AUTO_JQL" --recipients "$AUTO_RECIPIENTS" \
           --email-from perfscale-automation@redhat.com \
           --email-user $EMAIL_USER --email-server "smtp.gmail.com" \

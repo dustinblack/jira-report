@@ -47,7 +47,15 @@ parser.add_argument(
     type=str,
     dest="jira_server",
     required=True,
-    help="Full Jira server URL including https://",
+    help="Full Jira Cloud server URL (e.g. https://your-domain.atlassian.net)",
+)
+parser.add_argument(
+    "-E",
+    "--email",
+    type=str,
+    dest="jira_email",
+    required=True,
+    help="Jira account email address for Cloud basic auth",
 )
 parser.add_argument(
     "-T",
@@ -55,7 +63,7 @@ parser.add_argument(
     type=str,
     dest="jira_token",
     required=True,
-    help="Jira user authentication token; Create this in your Jira user profile",
+    help="Jira Cloud API token (create at https://id.atlassian.com)",
 )
 parser.add_argument(
     "-J",
@@ -164,7 +172,7 @@ parser.add_argument(
     required=False,
     default="bot",
     help=(
-        "Comments by authors that include this text will be skipped"
+        "Comments by authors whose display name includes this text will be skipped"
     ),
 )
 parser.add_argument(
@@ -291,7 +299,20 @@ def llm_helper(
 
 logger.info(f"Connecting to Jira server: {args.jira_server}")
 
-jira_conn = JIRA(server=args.jira_server, token_auth=(args.jira_token))
+jira_conn = JIRA(server=args.jira_server, basic_auth=(args.jira_email, args.jira_token))
+
+# Auto-discover the Epic Link custom field ID
+epic_link_field = None
+try:
+    for field in jira_conn.fields():
+        if field["name"] == "Epic Link":
+            epic_link_field = field["id"]
+            logger.info(f"Discovered Epic Link field: {epic_link_field}")
+            break
+    if epic_link_field is None:
+        logger.warning("Epic Link field not found; epic lookups will be skipped")
+except Exception as e:
+    logger.warning(f"Failed to discover Epic Link field: {e}; epic lookups will be skipped")
 
 logger.info(f"Running Jira query with JQL: {args.jql}")
 
@@ -318,8 +339,7 @@ try:
                 "updated",
                 "summary",
                 "status",
-                "customfield_12311140",
-            ],
+            ] + ([epic_link_field] if epic_link_field else []),
         )
     )
 except JIRAError as error:
@@ -348,7 +368,7 @@ if issues[0]["total"] > 0:
             all_comments = []
             if len(result["fields"]["comment"]["comments"]) > 0:
                 for comment in result["fields"]["comment"]["comments"]:
-                    if args.author_filter in comment["author"]["name"]:
+                    if args.author_filter in comment["author"]["displayName"]:
                         continue
                     all_comments.append(comment["body"])
                 comment_number = -1
@@ -357,7 +377,7 @@ if issues[0]["total"] > 0:
                         args.author_filter
                         in result["fields"]["comment"]["comments"][comment_number][
                             "author"
-                        ]["name"]
+                        ]["displayName"]
                     ):
                         comment_number -= 1
                         # debug
@@ -373,9 +393,9 @@ if issues[0]["total"] > 0:
                 result["fields"]["updated"], "%Y-%m-%dT%H:%M:%S.%f%z"
             )
 
-            if result["fields"]["customfield_12311140"]:
-                # Get the epic name based on the epic ID (customfield_12311140)
-                epic_jql = f"issue = {result['fields']['customfield_12311140']}"
+            if epic_link_field and result["fields"].get(epic_link_field):
+                # Get the epic name based on the epic ID
+                epic_jql = f"issue = {result['fields'][epic_link_field]}"
                 try:
                     epic_search = jira_conn.search_issues(
                         jql_str=epic_jql,
@@ -386,7 +406,7 @@ if issues[0]["total"] > 0:
                 except JIRAError as error:
                     logger.error(f"Jira query error:\n{error}")
                     sys.exit(1)
-                epic_number = f"{result['fields']['customfield_12311140']}"
+                epic_number = f"{result['fields'][epic_link_field]}"
                 epic_summary = f"{epic_search['issues'][0]['fields']['summary']}"
                 epic = f"{epic_number} - {epic_summary}"
             elif result["fields"]["issuetype"]["subtask"]:
@@ -397,20 +417,20 @@ if issues[0]["total"] > 0:
                         jql_str=subtask_jql,
                         json_result=True,
                         maxResults=1,
-                        fields=["summary", "customfield_12311140"],
+                        fields=["summary"] + ([epic_link_field] if epic_link_field else []),
                     )
                 except JIRAError as error:
                     logger.error(f"Jira query error:\n{error}")
                     sys.exit(1)
                 epic_number = (
-                    f"{epic_search['issues'][0]['fields']['customfield_12311140']}"
+                    f"{epic_search['issues'][0]['fields'].get(epic_link_field)}"
+                    if epic_link_field else "None"
                 )
                 epic_summary = f"{epic_search['issues'][0]['fields']['summary']}"
                 epic = f"{epic_number} - {epic_summary}"
                 subtask = f"This is a subtask of {result['fields']['parent']['key']}"
             else:
-                # This should result in 'None'
-                epic = result["fields"]["customfield_12311140"]
+                epic = result["fields"].get(epic_link_field) if epic_link_field else None
 
             result_dict["Issue"] = f"{result['key']} - {result['fields']['summary']}"
             result_dict["Link"] = f"{args.jira_server}/browse/{result['key']}"

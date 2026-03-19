@@ -28,6 +28,7 @@ import yaml
 env_vars = {}
 for var in (
     "jira_server",
+    "jira_email",
     "jira_token",
     "email_server",
     "email_from",
@@ -55,7 +56,16 @@ parser.add_argument(
     dest="jira_server",
     required=False,
     default=env_vars["jira_server"],
-    help="Full Jira server URL including https://",
+    help="Full Jira Cloud server URL (e.g. https://your-domain.atlassian.net)",
+)
+parser.add_argument(
+    "-E",
+    "--email",
+    type=str,
+    dest="jira_email",
+    required=False,
+    default=env_vars["jira_email"],
+    help="Jira account email address for Cloud basic auth",
 )
 parser.add_argument(
     "-T",
@@ -64,7 +74,7 @@ parser.add_argument(
     dest="jira_token",
     required=False,
     default=env_vars["jira_token"],
-    help="Jira user authentication token; Create this in your Jira user profile",
+    help="Jira Cloud API token (create at https://id.atlassian.com)",
 )
 parser.add_argument(
     "-e",
@@ -175,6 +185,8 @@ cmd = [
     "jira-report.py",
     "-S",
     args.jira_server,
+    "-E",
+    args.jira_email,
     "-T",
     args.jira_token,
     "-e",
