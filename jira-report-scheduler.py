@@ -81,6 +81,7 @@ new_crontab = ""
 
 for var in (
     "jira_server",
+    "jira_email",
     "jira_token",
     "email_server",
     "email_from",
