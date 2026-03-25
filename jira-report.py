@@ -352,13 +352,14 @@ except JIRAError as error:
 
 report_list = []
 
-if issues[0]["total"] > 0:
-    issue_count = issues[0]["total"]
+issue_count = issues[0].get("total", len(issues[0].get("issues", [])))
+if issue_count > 0:
     logger.info(f"Issue count: {issue_count}")
     for issue in issues:
         for result in issue["issues"]:
             result_dict = {}
             subtask = None
+            epic_number = None
 
             if result["fields"]["assignee"] is None:
                 owner = "NO OWNER"
@@ -439,7 +440,8 @@ if issues[0]["total"] > 0:
                 result_dict["Sub-Task"] = subtask
             result_dict["Owner"] = owner
             result_dict["Epic"] = epic
-            result_dict["Epic Link"] = f"{args.jira_server}/browse/{epic_number}"
+            if epic_number:
+                result_dict["Epic Link"] = f"{args.jira_server}/browse/{epic_number}"
             result_dict["Status"] = result["fields"]["status"]["name"]
             result_dict["Updated"] = datetime.strftime(
                 updated_time, "%a %d %b %Y, %I:%M%p"
@@ -524,7 +526,7 @@ if args.llm_model_api and args.llm_model_id and args.llm_token:
         for key, value in item.items():
             if "Link" not in key:
                 llm_report.append(f"{key}: {value}\n")
-            elif "Epic" in key and item["Epic"] and "subtask" not in item["Epic"]:
+            elif "Epic" in key and item.get("Epic") and "subtask" not in str(item["Epic"]):
                 llm_report.append(f"({value})\n")
             elif "Epic" not in key:
                 llm_report.append(f"({value})\n")
@@ -600,7 +602,7 @@ else:
                 continue
             if "Link" not in key:
                 report.append(f"{key}: {value}\n")
-            elif "Epic" in key and item["Epic"] and "subtask" not in item["Epic"]:
+            elif "Epic" in key and item.get("Epic") and "subtask" not in str(item["Epic"]):
                 report.append(f"({value})\n")
             elif "Epic" not in key:
                 report.append(f"({value})\n")
