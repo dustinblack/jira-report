@@ -1,4 +1,4 @@
-ARG CONTAINER_BASE="quay.io/centos/centos:stream10"
+ARG CONTAINER_BASE="centos:stream9"
 
 FROM $CONTAINER_BASE
 
@@ -10,12 +10,12 @@ COPY startup.sh /usr/bin/startup.sh
 
 RUN dnf -y install procps-ng vim-enhanced
 
-RUN dnf -y install cronie git \
+RUN dnf -y install cronie git python3.12 python3.12-pip \
  && dnf -y update \
  && dnf clean all \
  && rm -rf /var/cache/dnf \
- && python3 -m ensurepip \
+ && alternatives --set python3 /usr/bin/python3.12 \
  && python3 -m pip install --upgrade pip \
- && pip3 install -r requirements.txt
+ && python3 -m pip install -r requirements.txt
 
 ENTRYPOINT ["/usr/bin/startup.sh"]
