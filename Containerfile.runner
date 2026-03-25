@@ -1,4 +1,4 @@
-ARG CONTAINER_BASE="centos:stream9"
+ARG CONTAINER_BASE="quay.io/centos/centos:stream10"
 
 FROM $CONTAINER_BASE
 

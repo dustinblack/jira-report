@@ -1,5 +1,5 @@
 argparse
-jira
+jira>=3.10
 logger
 datetime
 pyyaml
